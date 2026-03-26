@@ -26,18 +26,20 @@ function getToken() {
 
 const OPENCLAW_TOKEN = getToken();
 
-// 调试日志
-console.log('[XinHaiChat] Token check:', {
-  'VUE_APP_OPENCLAW_TOKEN': {
-    exists: !!(process.env?.VUE_APP_OPENCLAW_TOKEN || import.meta.env?.VUE_APP_OPENCLAW_TOKEN),
-    value: (process.env?.VUE_APP_OPENCLAW_TOKEN || import.meta.env?.VUE_APP_OPENCLAW_TOKEN || '').substring(0, 10)
-  },
-  'VITE_OPENCLAW_TOKEN': {
-    exists: !!(process.env?.VITE_OPENCLAW_TOKEN || import.meta.env?.VITE_OPENCLAW_TOKEN),
-    value: (process.env?.VITE_OPENCLAW_TOKEN || import.meta.env?.VITE_OPENCLAW_TOKEN || '').substring(0, 10)
-  },
-  'final_token': OPENCLAW_TOKEN ? `✓ (${OPENCLAW_TOKEN.substring(0, 8)}...)` : '✗ (empty)'
-});
+// 调试日志 - 详细检查
+console.log('[XinHaiChat] ========== Token Debug ==========');
+if (typeof process !== 'undefined' && process.env) {
+  console.log('[XinHaiChat] process.env.VUE_APP_OPENCLAW_TOKEN:', 
+    process.env.VUE_APP_OPENCLAW_TOKEN ? 
+    `found (${process.env.VUE_APP_OPENCLAW_TOKEN.length} chars)` : 'not found');
+}
+if (typeof import.meta !== 'undefined' && import.meta.env) {
+  console.log('[XinHaiChat] import.meta.env.VITE_OPENCLAW_TOKEN:', 
+    import.meta.env.VITE_OPENCLAW_TOKEN ? 
+    `found (${import.meta.env.VITE_OPENCLAW_TOKEN.length} chars)` : 'not found');
+}
+console.log('[XinHaiChat] Final token:', OPENCLAW_TOKEN ? '✓ configured' : '✗ missing');
+console.log('[XinHaiChat] ==================================');
 
 const api = axios.create({
   baseURL: OPENCLAW_API_URL,
@@ -61,7 +63,7 @@ api.interceptors.response.use(
   (error) => {
     console.error('[XinHaiChat] ✗', error.response?.status || error.message);
     if (error.response?.status === 401) {
-      console.error('[XinHaiChat] Token invalid or missing. Check .env file has VUE_APP_OPENCLAW_TOKEN=your_token');
+      console.error('[XinHaiChat] Token invalid or missing');
     }
     return Promise.reject(error);
   }
@@ -120,7 +122,7 @@ export class XinHaiChatAPI {
   }
 
   /**
-   * 流式发送消息 - 使用 axios 的 onDownloadProgress
+   * 流式发送消息
    */
   async sendMessageStream(message, imageBase64 = null, onChunk, systemPrompt = '') {
     console.log('[XinHaiChat] ========== sendMessageStream ==========');
