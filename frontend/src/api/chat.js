@@ -7,17 +7,17 @@ const OPENCLAW_API_URL = '/openclaw';
 function getToken() {
   // Vue CLI 使用 process.env
   if (typeof process !== 'undefined' && process.env) {
-    const token = process.env.VUE_APP_OPENCLAW_TOKEN 
-      || process.env.VITE_OPENCLAW_TOKEN
-      || process.env.OPENCLAW_TOKEN;
+    const token = process.env.VUE_APP_OPENCLAW_TOKEN?.trim()
+      || process.env.VITE_OPENCLAW_TOKEN?.trim()
+      || process.env.OPENCLAW_TOKEN?.trim();
     if (token) return token;
   }
   
   // Vite 使用 import.meta.env
   if (typeof import.meta !== 'undefined' && import.meta.env) {
-    const token = import.meta.env.VITE_OPENCLAW_TOKEN
-      || import.meta.env.VUE_APP_OPENCLAW_TOKEN
-      || import.meta.env.OPENCLAW_TOKEN;
+    const token = import.meta.env.VITE_OPENCLAW_TOKEN?.trim()
+      || import.meta.env.VUE_APP_OPENCLAW_TOKEN?.trim()
+      || import.meta.env.OPENCLAW_TOKEN?.trim();
     if (token) return token;
   }
   
@@ -26,10 +26,17 @@ function getToken() {
 
 const OPENCLAW_TOKEN = getToken();
 
+// 调试日志
 console.log('[XinHaiChat] Token check:', {
-  'VUE_APP_OPENCLAW_TOKEN': (process.env?.VUE_APP_OPENCLAW_TOKEN || import.meta.env?.VUE_APP_OPENCLAW_TOKEN) ? '✓' : '✗',
-  'VITE_OPENCLAW_TOKEN': (process.env?.VITE_OPENCLAW_TOKEN || import.meta.env?.VITE_OPENCLAW_TOKEN) ? '✓' : '✗',
-  'final': OPENCLAW_TOKEN ? `✓ (${OPENCLAW_TOKEN.substring(0, 8)}...)` : '✗ (empty)'
+  'VUE_APP_OPENCLAW_TOKEN': {
+    exists: !!(process.env?.VUE_APP_OPENCLAW_TOKEN || import.meta.env?.VUE_APP_OPENCLAW_TOKEN),
+    value: (process.env?.VUE_APP_OPENCLAW_TOKEN || import.meta.env?.VUE_APP_OPENCLAW_TOKEN || '').substring(0, 10)
+  },
+  'VITE_OPENCLAW_TOKEN': {
+    exists: !!(process.env?.VITE_OPENCLAW_TOKEN || import.meta.env?.VITE_OPENCLAW_TOKEN),
+    value: (process.env?.VITE_OPENCLAW_TOKEN || import.meta.env?.VITE_OPENCLAW_TOKEN || '').substring(0, 10)
+  },
+  'final_token': OPENCLAW_TOKEN ? `✓ (${OPENCLAW_TOKEN.substring(0, 8)}...)` : '✗ (empty)'
 });
 
 const api = axios.create({
@@ -54,7 +61,7 @@ api.interceptors.response.use(
   (error) => {
     console.error('[XinHaiChat] ✗', error.response?.status || error.message);
     if (error.response?.status === 401) {
-      console.error('[XinHaiChat] Token invalid. Check VUE_APP_OPENCLAW_TOKEN in .env file');
+      console.error('[XinHaiChat] Token invalid or missing. Check .env file has VUE_APP_OPENCLAW_TOKEN=your_token');
     }
     return Promise.reject(error);
   }
