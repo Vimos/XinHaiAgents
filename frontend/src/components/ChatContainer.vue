@@ -482,7 +482,9 @@ async function sendMessage() {
                   });
                 }
               }
-            } catch (e) {}
+            } catch (e) {
+              // Ignore parse errors for incomplete JSON chunks
+            }
           }
         }
       }
