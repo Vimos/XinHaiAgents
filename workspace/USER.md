@@ -1,97 +1,47 @@
 # USER.md - About Your Human
 
-## Team Members
+## 所属机构
 
-### Primary Contact: Vimos (Xu Ancheng)
-- **GitHub:** @Vimos
-- **Role:** Project Lead, Core Developer
-- **Institution:** SIAT, Chinese Academy of Sciences
-- **Research:** Multi-agent systems, Mental health AI
+**中国科学院深圳先进技术研究院** - 谭明环等
 
-### Collaborators
+## 团队背景
 
-**Jingwei Zhu**
-- Institution: USTC / SIAT
-- Focus: LLM applications, Prompt engineering
-- Contribution: CLPsych 2024 work
+专注于多智能体系统、心理健康AI、情感计算对话系统的研究与开发。
 
-**Minghuan Tan (谭明环)**
-- Institution: SIAT, Chinese Academy of Sciences
-- Position: Assistant Researcher
-- Background: PhD from Singapore Management University (2022)
-- Research: NLP, Emotional support conversation, LLM alignment
-- Role: Co-author on AutoCBT, CLPsych papers
+## 研究领域
 
-**Min Yang**
-- Institution: SIAT, Chinese Academy of Sciences
-- Position: Professor
-- Research: Data mining, NLP, Mental health AI
+- 多智能体仿真与编排
+- 认知行为治疗自动化
+- 自杀预防AI
+- 情感支持对话系统
+- 大语言模型安全与价值对齐
 
-## Project Context
+## 项目
 
-**XinHaiAgents** - Sea of Minds Framework
-- Open-source multi-agent simulation platform
-- Focus on mental health applications
-- Built with FastAPI + Vue 3 + Phaser
+**XinHaiAgents** - 心海多智能体框架
+- 开源多智能体仿真平台
+- 专注心理健康应用
+- 基于 FastAPI + Vue 3 + Phaser
 
-### Key Publications
-1. **CLPsych 2024** - Suicide risk evidence extraction
-2. **AutoCBT** - Multi-agent CBT framework (under review)
+### 主要工作
+1. **CLPsych 2024** - 自杀风险证据提取
+2. **AutoCBT** - 多智能体CBT框架
+3. **APTNESS** - 共情回复生成（CIKM 2024）
+4. **CPsyCoun** - 中文心理咨询对话（ACL 2024）
 
-### Research Interests
-- Multi-agent simulation
-- Cognitive behavioral therapy automation
-- Suicide prevention AI
-- Emotional support conversation systems
-- LLM safety and alignment
+## 沟通偏好
 
-## Communication Preferences
+- **渠道**: Discord / GitHub
+- **语言**: 中文 / English
+- **风格**: 技术导向，直接协作
 
-- **Primary Channel:** Discord / GitHub
-- **Response Time:** Usually within 24h
-- **Language:** Chinese / English
-- **Style:** Technical, direct, collaborative
+## 技术栈
 
-## Project Goals
-
-### Short-term
-- Stabilize XinHaiAgents framework
-- Complete OpenClaw skill integration
-- Improve documentation and examples
-
-### Long-term
-- Deploy real-world mental health applications
-- Build evaluation benchmarks
-- Contribute to open-source community
-
-## Technical Stack
-
-- **Backend:** Python, FastAPI, LangChain
-- **Frontend:** Vue 3, Phaser, Arco Design
-- **ML:** PyTorch, Transformers
-- **DB:** ChromaDB, PostgreSQL
-- **DevOps:** Docker, GitHub Actions
-
-## Preferences
-
-- Code quality over speed
-- Documentation with every feature
-- Test-driven development
-- Open-source first
-
-## What to Call Them
-
-- **Vimos** - GitHub handle, primary contact
-- **谭老师 / Minghuan** - For Tan Minghuan
-- **Team** - When addressing collectively
-
-## Important Notes
-
-- This is a research project with real-world impact potential
-- Mental health applications require extra care and safety measures
-- Team values scientific rigor and ethical AI development
-- Open to collaboration and community contributions
+- **后端**: Python, FastAPI, LangChain
+- **前端**: Vue 3, Phaser
+- **AI**: PyTorch, Transformers
+- **数据库**: ChromaDB, PostgreSQL
 
 ---
 
-*Keep this updated as relationships evolve.*
+*开发阶段，信息持续更新*
