@@ -92,8 +92,6 @@ const navItems = [
   { path: '/chat', label: '对话', icon: '💬' },
   { path: '/simulation', label: '模拟', icon: '🎭' },
   { path: '/ragchat', label: 'RAG对话', icon: '📚' },
-  { path: '/autosop', label: 'AutoSOP', icon: '📋' },
-  { path: '/autoinvoice', label: 'AutoInvoice', icon: '📄' },
 ]
 
 const userInitials = computed(() => {
