@@ -32,8 +32,8 @@ module.exports = defineConfig({
         proxy: {
             '/api*': {
                 // Forward frontend dev server request for /api to flask dev server
-                target: 'http://localhost:5000/',
-                ws: true
+                target: 'http://localhost:5000/'
+                // ws: true  // Disabled - not using WebSocket
             }
         }
     }
