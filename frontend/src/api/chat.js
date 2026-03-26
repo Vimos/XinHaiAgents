@@ -3,6 +3,11 @@ import axios from 'axios';
 // OpenClaw Gateway HTTP API 配置
 const OPENCLAW_API_URL = '/openclaw';
 
+// ===== 临时方案：硬编码 Token =====
+// 由于 .env 文件加载有问题，暂时使用硬编码
+// TODO: 修复后改回从环境变量读取
+const FALLBACK_TOKEN = '171f137313b83a6df17ee17a63060830fbba5901ecf09dec';
+
 // 支持多种环境变量命名（Vue CLI, Vite）
 function getToken() {
   // Vue CLI 使用 process.env
@@ -24,29 +29,23 @@ function getToken() {
   return '';
 }
 
-const OPENCLAW_TOKEN = getToken();
+const OPENCLAW_TOKEN = getToken() || FALLBACK_TOKEN;
 
-// 调试日志
-console.log('[XinHaiChat] Token status:', OPENCLAW_TOKEN ? '✓ configured' : '✗ missing');
-
-if (!OPENCLAW_TOKEN) {
-  console.warn('[XinHaiChat] ⚠️ No token found!');
-  console.warn('[XinHaiChat] Please create frontend/.env file with:');
-  console.warn('[XinHaiChat] VUE_APP_OPENCLAW_TOKEN=your_token_here');
-}
+console.log('[XinHaiChat] Token:', OPENCLAW_TOKEN === FALLBACK_TOKEN 
+  ? '⚠️ using fallback (env not loaded)' 
+  : '✓ from env');
 
 const api = axios.create({
   baseURL: OPENCLAW_API_URL,
   timeout: 300000,
   headers: {
     'Content-Type': 'application/json',
-    ...(OPENCLAW_TOKEN ? { 'Authorization': `Bearer ${OPENCLAW_TOKEN}` } : {})
+    'Authorization': `Bearer ${OPENCLAW_TOKEN}`
   },
 });
 
 api.interceptors.request.use((config) => {
-  console.log('[XinHaiChat] →', config.method?.toUpperCase(), config.url,
-    config.headers.Authorization ? '(with token)' : '(no token)');
+  console.log('[XinHaiChat] →', config.method?.toUpperCase(), config.url);
   return config;
 });
 
@@ -58,7 +57,7 @@ api.interceptors.response.use(
   (error) => {
     console.error('[XinHaiChat] ✗', error.response?.status || error.message);
     if (error.response?.status === 401) {
-      console.error('[XinHaiChat] Token invalid. Check VUE_APP_OPENCLAW_TOKEN in .env file');
+      console.error('[XinHaiChat] Token invalid');
     }
     return Promise.reject(error);
   }
@@ -75,9 +74,6 @@ export class XinHaiChatAPI {
 
   async sendMessage(message, imageBase64 = null, systemPrompt = '') {
     console.log('[XinHaiChat] ========== sendMessage ==========');
-    if (!OPENCLAW_TOKEN) {
-      throw new Error('OpenClaw token not configured. Please set VUE_APP_OPENCLAW_TOKEN in .env file');
-    }
 
     try {
       const messages = [];
@@ -118,9 +114,6 @@ export class XinHaiChatAPI {
 
   async sendMessageStream(message, imageBase64 = null, onChunk, systemPrompt = '') {
     console.log('[XinHaiChat] ========== sendMessageStream ==========');
-    if (!OPENCLAW_TOKEN) {
-      throw new Error('OpenClaw token not configured. Please set VUE_APP_OPENCLAW_TOKEN in .env file');
-    }
 
     try {
       const messages = [];
