@@ -1,4 +1,5 @@
 const {defineConfig} = require('@vue/cli-service')
+
 module.exports = defineConfig({
     transpileDependencies: true,
     chainWebpack: config => {
@@ -22,16 +23,21 @@ module.exports = defineConfig({
     outputDir: 'dist',
     assetsDir: 'static',
     devServer: {
+        port: 8080,
         proxy: {
-            '/api*': {
-                // Flask backend API
-                target: 'http://localhost:5000/'
+            '/api': {
+                target: 'http://localhost:5000',
+                changeOrigin: true,
+                logLevel: 'debug'
             },
-            '/openclaw*': {
-                // OpenClaw Gateway API
-                target: 'http://localhost:18789/',
+            '/openclaw': {
+                target: 'http://localhost:18789',
                 pathRewrite: { '^/openclaw': '' },
-                changeOrigin: true
+                changeOrigin: true,
+                logLevel: 'debug',
+                onProxyReq: (proxyReq, req) => {
+                    console.log('[Proxy]', req.method, req.url, '->', 'http://localhost:18789' + proxyReq.path);
+                }
             }
         }
     }
