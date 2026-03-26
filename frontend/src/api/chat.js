@@ -26,32 +26,27 @@ function getToken() {
 
 const OPENCLAW_TOKEN = getToken();
 
-// 调试日志 - 详细检查
-console.log('[XinHaiChat] ========== Token Debug ==========');
-if (typeof process !== 'undefined' && process.env) {
-  console.log('[XinHaiChat] process.env.VUE_APP_OPENCLAW_TOKEN:', 
-    process.env.VUE_APP_OPENCLAW_TOKEN ? 
-    `found (${process.env.VUE_APP_OPENCLAW_TOKEN.length} chars)` : 'not found');
+// 调试日志
+console.log('[XinHaiChat] Token status:', OPENCLAW_TOKEN ? '✓ configured' : '✗ missing');
+
+if (!OPENCLAW_TOKEN) {
+  console.warn('[XinHaiChat] ⚠️ No token found!');
+  console.warn('[XinHaiChat] Please create frontend/.env file with:');
+  console.warn('[XinHaiChat] VUE_APP_OPENCLAW_TOKEN=your_token_here');
 }
-if (typeof import.meta !== 'undefined' && import.meta.env) {
-  console.log('[XinHaiChat] import.meta.env.VITE_OPENCLAW_TOKEN:', 
-    import.meta.env.VITE_OPENCLAW_TOKEN ? 
-    `found (${import.meta.env.VITE_OPENCLAW_TOKEN.length} chars)` : 'not found');
-}
-console.log('[XinHaiChat] Final token:', OPENCLAW_TOKEN ? '✓ configured' : '✗ missing');
-console.log('[XinHaiChat] ==================================');
 
 const api = axios.create({
   baseURL: OPENCLAW_API_URL,
   timeout: 300000,
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${OPENCLAW_TOKEN}`
+    ...(OPENCLAW_TOKEN ? { 'Authorization': `Bearer ${OPENCLAW_TOKEN}` } : {})
   },
 });
 
 api.interceptors.request.use((config) => {
-  console.log('[XinHaiChat] →', config.method?.toUpperCase(), config.url);
+  console.log('[XinHaiChat] →', config.method?.toUpperCase(), config.url,
+    config.headers.Authorization ? '(with token)' : '(no token)');
   return config;
 });
 
@@ -63,7 +58,7 @@ api.interceptors.response.use(
   (error) => {
     console.error('[XinHaiChat] ✗', error.response?.status || error.message);
     if (error.response?.status === 401) {
-      console.error('[XinHaiChat] Token invalid or missing');
+      console.error('[XinHaiChat] Token invalid. Check VUE_APP_OPENCLAW_TOKEN in .env file');
     }
     return Promise.reject(error);
   }
@@ -78,11 +73,11 @@ export class XinHaiChatAPI {
     this.sessionKey = `xinhai_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  /**
-   * 发送消息（非流式）
-   */
   async sendMessage(message, imageBase64 = null, systemPrompt = '') {
     console.log('[XinHaiChat] ========== sendMessage ==========');
+    if (!OPENCLAW_TOKEN) {
+      throw new Error('OpenClaw token not configured. Please set VUE_APP_OPENCLAW_TOKEN in .env file');
+    }
 
     try {
       const messages = [];
@@ -121,11 +116,11 @@ export class XinHaiChatAPI {
     }
   }
 
-  /**
-   * 流式发送消息
-   */
   async sendMessageStream(message, imageBase64 = null, onChunk, systemPrompt = '') {
     console.log('[XinHaiChat] ========== sendMessageStream ==========');
+    if (!OPENCLAW_TOKEN) {
+      throw new Error('OpenClaw token not configured. Please set VUE_APP_OPENCLAW_TOKEN in .env file');
+    }
 
     try {
       const messages = [];
