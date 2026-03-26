@@ -15,8 +15,11 @@
       </div>
       
       <div class="chat-header__actions">
+        <xh-button variant="ghost" size="sm" @click="showHistory = true">
+          📚 历史记录
+        </xh-button>
         <xh-button variant="ghost" size="sm" @click="clearChat">
-          清空对话
+          🗑️ 清空
         </xh-button>
       </div>
     </header>
@@ -28,6 +31,9 @@
         <div class="welcome-icon">🌊</div>
         <h2>欢迎来到心海</h2>
         <p>我是您的AI心理咨询助手，可以为您提供情感支持和专业建议。</p>
+        <div class="session-info" v-if="sessionId">
+          <span class="session-tag">会话 ID: {{ sessionId.substring(0, 16) }}...</span>
+        </div>
         <div class="quick-starters">
           <button
             v-for="starter in quickStarters"
@@ -48,7 +54,6 @@
       >
         <xh-avatar
           :name="message.role === 'user' ? '用户' : '心海'"
-          :src="message.role === 'assistant' ? '/avatar-ai.png' : null"
           size="md"
         />
         
@@ -73,6 +78,48 @@
           <div class="typing-indicator">
             <span></span><span></span><span></span>
           </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- History Modal -->
+    <div v-if="showHistory" class="history-modal" @click.self="showHistory = false">
+      <div class="history-panel">
+        <div class="history-header">
+          <h3>📚 历史会话</h3>
+          <button class="close-btn" @click="showHistory = false">✕</button>
+        </div>
+        
+        <div class="history-list">
+          <div v-if="sessions.length === 0" class="empty-history">
+            暂无历史记录
+          </div>
+          
+          <div
+            v-for="session in sessions"
+            :key="session.sessionId"
+            :class="['history-item', { active: session.sessionId === sessionId }]"
+            @click="loadSession(session.sessionId)"
+          >
+            <div class="history-title">{{ session.title }}</div>
+            <div class="history-meta">
+              <span>{{ session.messageCount }} 条消息</span>
+              <span>{{ formatDate(session.timestamp) }}</span>
+            </div>
+            
+            <button 
+              class="delete-btn" 
+              @click.stop="deleteSession(session.sessionId)"
+            >
+              🗑️
+            </button>
+          </div>
+        </div>
+        
+        <div class="history-actions">
+          <xh-button variant="primary" @click="createNewSession">
+            + 新建对话
+          </xh-button>
         </div>
       </div>
     </div>
@@ -126,18 +173,32 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, watch } from 'vue';
+import { ref, computed, nextTick, watch, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { chatApi } from '@/api/chat.js';
+import { 
+  generateSessionId, 
+  saveChatHistory, 
+  loadChatHistory, 
+  deleteChatHistory,
+  getAllSessions 
+} from '@/utils/storage.js';
 import XhAvatar from '@/components/ui/XhAvatar.vue';
 import XhButton from '@/components/ui/XhButton.vue';
 
+const route = useRoute();
+const router = useRouter();
+
 // State
+const sessionId = ref('');
 const messages = ref([]);
 const inputMessage = ref('');
 const selectedImage = ref(null);
 const isLoading = ref(false);
 const messagesContainer = ref(null);
 const fileInput = ref(null);
+const showHistory = ref(false);
+const sessions = ref([]);
 
 // Quick starter messages
 const quickStarters = [
@@ -152,9 +213,84 @@ const canSend = computed(() => {
   return (inputMessage.value.trim() || selectedImage.value) && !isLoading.value;
 });
 
-// Watch messages and scroll to bottom
+// Load sessions list
+const loadSessionsList = () => {
+  sessions.value = getAllSessions();
+};
+
+// Create new session
+const createNewSession = () => {
+  sessionId.value = generateSessionId();
+  messages.value = [];
+  saveChatHistory(sessionId.value, []);
+  loadSessionsList();
+  showHistory.value = false;
+  
+  // Update URL
+  router.replace({ query: { ...route.query, session: sessionId.value } });
+};
+
+// Load specific session
+const loadSession = (id) => {
+  const history = loadChatHistory(id);
+  if (history) {
+    sessionId.value = id;
+    messages.value = history;
+    showHistory.value = false;
+    
+    // Update URL
+    router.replace({ query: { ...route.query, session: id } });
+  }
+};
+
+// Delete session
+const deleteSession = (id) => {
+  if (confirm('确定要删除这个会话吗？')) {
+    deleteChatHistory(id);
+    loadSessionsList();
+    
+    // If current session deleted, create new one
+    if (id === sessionId.value) {
+      createNewSession();
+    }
+  }
+};
+
+// Initialize
+onMounted(() => {
+  loadSessionsList();
+  
+  // Check for session in URL
+  const urlSessionId = route.query.session;
+  if (urlSessionId) {
+    const history = loadChatHistory(urlSessionId);
+    if (history) {
+      sessionId.value = urlSessionId;
+      messages.value = history;
+      return;
+    }
+  }
+  
+  // Try to load most recent session
+  const recentSessions = getAllSessions();
+  if (recentSessions.length > 0) {
+    const mostRecent = recentSessions[0];
+    loadSession(mostRecent.sessionId);
+  } else {
+    // Create new session
+    createNewSession();
+  }
+});
+
+// Watch messages and save to storage
 watch(messages, () => {
   scrollToBottom();
+  
+  // Auto save (debounced)
+  if (sessionId.value) {
+    saveChatHistory(sessionId.value, messages.value);
+    loadSessionsList();
+  }
 }, { deep: true });
 
 // Methods
@@ -266,8 +402,12 @@ async function sendMessage() {
 }
 
 function clearChat() {
-  if (confirm('确定要清空对话吗？')) {
+  if (confirm('确定要清空当前对话吗？')) {
     messages.value = [];
+    if (sessionId.value) {
+      saveChatHistory(sessionId.value, []);
+      loadSessionsList();
+    }
   }
 }
 
@@ -284,6 +424,16 @@ function formatTime(timestamp) {
   return date.toLocaleTimeString('zh-CN', { 
     hour: '2-digit', 
     minute: '2-digit' 
+  });
+}
+
+function formatDate(timestamp) {
+  const date = new Date(timestamp);
+  return date.toLocaleDateString('zh-CN', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
   });
 }
 </script>
@@ -336,6 +486,11 @@ function formatTime(timestamp) {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
+.chat-header__actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
 /* Messages Area */
 .chat-messages {
   flex: 1;
@@ -367,7 +522,19 @@ function formatTime(timestamp) {
 
 .welcome-message p {
   color: var(--text-secondary);
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-md);
+}
+
+.session-info {
+  margin-bottom: var(--space-lg);
+}
+
+.session-tag {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  background: rgba(0, 212, 255, 0.1);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
 }
 
 .quick-starters {
@@ -375,6 +542,7 @@ function formatTime(timestamp) {
   flex-wrap: wrap;
   gap: var(--space-md);
   justify-content: center;
+  margin-top: var(--space-xl);
 }
 
 .starter-btn {
@@ -391,6 +559,127 @@ function formatTime(timestamp) {
   background: rgba(0, 212, 255, 0.2);
   border-color: var(--accent-primary);
   color: var(--text-primary);
+}
+
+/* History Modal */
+.history-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.history-panel {
+  width: 400px;
+  max-width: 90%;
+  max-height: 70%;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.history-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: var(--space-xs);
+}
+
+.close-btn:hover {
+  color: var(--text-primary);
+}
+
+.history-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+}
+
+.empty-history {
+  text-align: center;
+  color: var(--text-muted);
+  padding: var(--space-xl);
+}
+
+.history-item {
+  position: relative;
+  padding: var(--space-md);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.history-item:hover {
+  background: rgba(0, 212, 255, 0.1);
+  border-color: var(--accent-primary);
+}
+
+.history-item.active {
+  background: rgba(0, 212, 255, 0.15);
+  border-color: var(--accent-primary);
+}
+
+.history-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-xs);
+  padding-right: 30px;
+}
+
+.history-meta {
+  display: flex;
+  gap: var(--space-md);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.delete-btn {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity var(--transition-fast);
+}
+
+.delete-btn:hover {
+  opacity: 1;
+}
+
+.history-actions {
+  padding: var(--space-md);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: center;
 }
 
 /* Message Bubbles */
