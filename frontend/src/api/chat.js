@@ -2,9 +2,35 @@ import axios from 'axios';
 
 // OpenClaw Gateway HTTP API 配置
 const OPENCLAW_API_URL = '/openclaw';
-const OPENCLAW_TOKEN = typeof import.meta !== 'undefined' && import.meta.env?.VITE_OPENCLAW_TOKEN 
-  ? import.meta.env.VITE_OPENCLAW_TOKEN 
-  : '';
+
+// 支持多种环境变量命名（Vue CLI, Vite）
+function getToken() {
+  // Vue CLI 使用 process.env
+  if (typeof process !== 'undefined' && process.env) {
+    const token = process.env.VUE_APP_OPENCLAW_TOKEN 
+      || process.env.VITE_OPENCLAW_TOKEN
+      || process.env.OPENCLAW_TOKEN;
+    if (token) return token;
+  }
+  
+  // Vite 使用 import.meta.env
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    const token = import.meta.env.VITE_OPENCLAW_TOKEN
+      || import.meta.env.VUE_APP_OPENCLAW_TOKEN
+      || import.meta.env.OPENCLAW_TOKEN;
+    if (token) return token;
+  }
+  
+  return '';
+}
+
+const OPENCLAW_TOKEN = getToken();
+
+console.log('[XinHaiChat] Token check:', {
+  'VUE_APP_OPENCLAW_TOKEN': (process.env?.VUE_APP_OPENCLAW_TOKEN || import.meta.env?.VUE_APP_OPENCLAW_TOKEN) ? '✓' : '✗',
+  'VITE_OPENCLAW_TOKEN': (process.env?.VITE_OPENCLAW_TOKEN || import.meta.env?.VITE_OPENCLAW_TOKEN) ? '✓' : '✗',
+  'final': OPENCLAW_TOKEN ? `✓ (${OPENCLAW_TOKEN.substring(0, 8)}...)` : '✗ (empty)'
+});
 
 const api = axios.create({
   baseURL: OPENCLAW_API_URL,
@@ -27,6 +53,9 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('[XinHaiChat] ✗', error.response?.status || error.message);
+    if (error.response?.status === 401) {
+      console.error('[XinHaiChat] Token invalid. Check VUE_APP_OPENCLAW_TOKEN in .env file');
+    }
     return Promise.reject(error);
   }
 );
@@ -123,7 +152,6 @@ export class XinHaiChatAPI {
           const text = progressEvent.event.target.responseText;
           if (!text) return;
           
-          // 解析 SSE 格式
           const lines = text.split('\n').filter(line => line.trim());
           
           for (const line of lines) {
