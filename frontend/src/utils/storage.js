@@ -1,32 +1,45 @@
 /**
- * 对话历史存储管理
- * 使用 localStorage 实现客户端存储
+ * 对话历史存储管理 - 按边栏/路由隔离版本
+ * 每个边栏（/chat, /cbt, /suicide-risk等）有独立的会话空间
  */
 
 const STORAGE_KEY_PREFIX = 'xinhai_chat_';
 
 /**
  * 生成会话ID
+ * 格式: xinhai_{sidebar}_{timestamp}_{random}
  */
-export function generateSessionId() {
-  return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+export function generateSessionId(sidebar = 'chat') {
+  return `xinhai_${sidebar}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * 从 sessionId 解析边栏类型
+ */
+export function parseSidebarFromSessionId(sessionId) {
+  if (!sessionId) return 'chat';
+  const parts = sessionId.split('_');
+  return parts[1] || 'chat';
 }
 
 /**
  * 保存对话历史
  * @param {string} sessionId - 会话ID
+ * @param {string} sidebar - 边栏类型 (chat/cbt/suicide-risk等)
  * @param {Array} messages - 消息数组
  */
-export function saveChatHistory(sessionId, messages) {
+export function saveChatHistory(sessionId, sidebar, messages) {
   try {
     const key = STORAGE_KEY_PREFIX + sessionId;
     const data = {
+      sessionId,
+      sidebar,
       messages,
       timestamp: Date.now(),
       lastUpdated: new Date().toISOString()
     };
     localStorage.setItem(key, JSON.stringify(data));
-    console.log('[Storage] Saved chat history:', sessionId, messages.length, 'messages');
+    console.log(`[Storage] Saved [${sidebar}]:`, sessionId, messages.length, 'messages');
   } catch (error) {
     console.error('[Storage] Failed to save chat history:', error);
   }
@@ -35,7 +48,7 @@ export function saveChatHistory(sessionId, messages) {
 /**
  * 加载对话历史
  * @param {string} sessionId - 会话ID
- * @returns {Array|null} 消息数组
+ * @returns {Object|null} 完整会话数据
  */
 export function loadChatHistory(sessionId) {
   try {
@@ -44,8 +57,8 @@ export function loadChatHistory(sessionId) {
     if (!data) return null;
     
     const parsed = JSON.parse(data);
-    console.log('[Storage] Loaded chat history:', sessionId, parsed.messages?.length, 'messages');
-    return parsed.messages || [];
+    console.log(`[Storage] Loaded [${parsed.sidebar}]:`, sessionId, parsed.messages?.length, 'messages');
+    return parsed;
   } catch (error) {
     console.error('[Storage] Failed to load chat history:', error);
     return null;
@@ -60,17 +73,18 @@ export function deleteChatHistory(sessionId) {
   try {
     const key = STORAGE_KEY_PREFIX + sessionId;
     localStorage.removeItem(key);
-    console.log('[Storage] Deleted chat history:', sessionId);
+    console.log('[Storage] Deleted:', sessionId);
   } catch (error) {
     console.error('[Storage] Failed to delete chat history:', error);
   }
 }
 
 /**
- * 获取所有会话列表
+ * 获取指定边栏的所有会话列表
+ * @param {string} sidebar - 边栏类型
  * @returns {Array} 会话列表
  */
-export function getAllSessions() {
+export function getSessionsBySidebar(sidebar) {
   try {
     const sessions = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -79,19 +93,23 @@ export function getAllSessions() {
         const sessionId = key.replace(STORAGE_KEY_PREFIX, '');
         const data = JSON.parse(localStorage.getItem(key));
         
-        // 获取第一条用户消息作为标题
-        const firstUserMsg = data.messages?.find(m => m.role === 'user');
-        const title = firstUserMsg 
-          ? firstUserMsg.content.substring(0, 30) + '...'
-          : '新对话';
-        
-        sessions.push({
-          sessionId,
-          title,
-          timestamp: data.timestamp,
-          lastUpdated: data.lastUpdated,
-          messageCount: data.messages?.length || 0
-        });
+        // 只返回指定边栏的会话
+        if (data.sidebar === sidebar) {
+          // 获取第一条用户消息作为标题
+          const firstUserMsg = data.messages?.find(m => m.role === 'user');
+          const title = firstUserMsg 
+            ? firstUserMsg.content.substring(0, 30) + '...'
+            : '新对话';
+          
+          sessions.push({
+            sessionId,
+            sidebar: data.sidebar,
+            title,
+            timestamp: data.timestamp,
+            lastUpdated: data.lastUpdated,
+            messageCount: data.messages?.length || 0
+          });
+        }
       }
     }
     
@@ -104,12 +122,34 @@ export function getAllSessions() {
 }
 
 /**
+ * 获取所有边栏的会话统计
+ * @returns {Object} 各边栏会话数量
+ */
+export function getSidebarStats() {
+  const stats = {};
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(STORAGE_KEY_PREFIX)) {
+        const data = JSON.parse(localStorage.getItem(key));
+        const sidebar = data.sidebar || 'chat';
+        stats[sidebar] = (stats[sidebar] || 0) + 1;
+      }
+    }
+  } catch (error) {
+    console.error('[Storage] Failed to get stats:', error);
+  }
+  return stats;
+}
+
+/**
  * 清理旧会话（保留最近 N 个）
+ * @param {string} sidebar - 边栏类型
  * @param {number} keepCount - 保留数量
  */
-export function cleanupOldSessions(keepCount = 20) {
+export function cleanupOldSessions(sidebar, keepCount = 10) {
   try {
-    const sessions = getAllSessions();
+    const sessions = getSessionsBySidebar(sidebar);
     if (sessions.length <= keepCount) return;
     
     const toDelete = sessions.slice(keepCount);
@@ -117,10 +157,20 @@ export function cleanupOldSessions(keepCount = 20) {
       deleteChatHistory(session.sessionId);
     });
     
-    console.log('[Storage] Cleaned up', toDelete.length, 'old sessions');
+    console.log(`[Storage] Cleaned up ${toDelete.length} old sessions for ${sidebar}`);
   } catch (error) {
     console.error('[Storage] Failed to cleanup sessions:', error);
   }
+}
+
+/**
+ * 获取当前边栏的最近会话（用于自动恢复）
+ * @param {string} sidebar - 边栏类型
+ * @returns {string|null} 最近会话ID
+ */
+export function getMostRecentSession(sidebar) {
+  const sessions = getSessionsBySidebar(sidebar);
+  return sessions.length > 0 ? sessions[0].sessionId : null;
 }
 
 /**
