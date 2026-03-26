@@ -21,6 +21,8 @@ export class MultiAgentScene extends Phaser.Scene {
     }
 
     create() {
+        console.log('[MultiAgentScene] Creating scene...');
+        
         // 海洋主题背景
         this.createBackground();
         
@@ -35,6 +37,13 @@ export class MultiAgentScene extends Phaser.Scene {
         
         // 模拟对话流
         this.startSimulation();
+        
+        console.log('[MultiAgentScene] Scene created successfully');
+        
+        // 通知场景已准备好
+        if (this.game && this.game.events) {
+            this.game.events.emit('current-scene-ready', this);
+        }
     }
 
     createBackground() {

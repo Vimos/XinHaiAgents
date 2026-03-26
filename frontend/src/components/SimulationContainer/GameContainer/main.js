@@ -6,6 +6,23 @@ import { MultiAgentScene } from './scenes/MultiAgentScene';
 import Phaser from 'phaser';
 import { Preloader } from './scenes/Preloader';
 
+// 场景启动插件 - 跳过菜单直接启动 MultiAgentScene
+class AutoStartPlugin extends Phaser.Plugins.BasePlugin {
+    constructor(pluginManager) {
+        super(pluginManager);
+    }
+
+    start() {
+        this.game.events.on('ready', () => {
+            console.log('[Phaser] Auto-starting MultiAgentScene...');
+            // 延迟一点确保预加载完成
+            setTimeout(() => {
+                this.game.scene.start('MultiAgentScene');
+            }, 100);
+        });
+    }
+}
+
 // 多智能体场景配置
 const config = {
     type: Phaser.AUTO,
@@ -17,10 +34,15 @@ const config = {
         Boot,
         Preloader,
         MainMenu,
-        MultiAgentScene,  // 使用新的多智能体场景
+        MultiAgentScene,
         Game,
         GameOver
     ],
+    plugins: {
+        global: [
+            { key: 'AutoStartPlugin', plugin: AutoStartPlugin, start: true }
+        ]
+    },
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
