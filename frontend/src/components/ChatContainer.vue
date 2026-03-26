@@ -11,6 +11,15 @@
       </div>
       
       <div class="chat-header__actions">
+        <xh-button 
+          v-if="toolCalls.length > 0"
+          variant="ghost" 
+          size="sm" 
+          @click="showToolCalls = !showToolCalls"
+          :class="{ 'active': showToolCalls }"
+        >
+          🔧 工具调用 ({{ toolCalls.length }})
+        </xh-button>
         <xh-button variant="ghost" size="sm" @click="showHistory = true">
           📚 历史记录
         </xh-button>
@@ -74,6 +83,33 @@
         <div class="message__content">
           <div class="typing-indicator">
             <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tool Calls Panel -->
+    <div v-if="showToolCalls && toolCalls.length > 0" class="toolcalls-panel">
+      <div class="toolcalls-header">
+        <span>🔧 工具调用记录</span>
+        <xh-button variant="ghost" size="sm" @click="showToolCalls = false">✕</xh-button>
+      </div>
+      <div class="toolcalls-list">
+        <div 
+          v-for="(call, index) in toolCalls" 
+          :key="index"
+          class="toolcall-item"
+        >
+          <div class="toolcall-header">
+            <span class="toolcall-name">{{ call.name }}</span>
+            <span class="toolcall-time">{{ formatTime(call.timestamp) }}</span>
+          </div>
+          <div class="toolcall-args">
+            <pre>{{ JSON.stringify(call.arguments, null, 2) }}</pre>
+          </div>
+          <div v-if="call.result" class="toolcall-result">
+            <div class="result-label">结果:</div>
+            <pre>{{ typeof call.result === 'string' ? call.result : JSON.stringify(call.result, null, 2) }}</pre>
           </div>
         </div>
       </div>
@@ -231,6 +267,8 @@ const router = useRouter();
 // State
 const sessionId = ref('');
 const messages = ref([]);
+const toolCalls = ref([]); // 存储 tool call 历史
+const showToolCalls = ref(false); // 是否展开 tool call 面板
 const inputMessage = ref('');
 const selectedImage = ref(null);
 const isLoading = ref(false);
@@ -467,9 +505,35 @@ async function sendMessage() {
             
             try {
               const json = JSON.parse(data);
-              const delta = json.choices?.[0]?.delta?.content;
-              if (delta) {
-                content += delta;
+              const delta = json.choices?.[0]?.delta;
+              
+              // 处理 tool_calls
+              if (delta?.tool_calls) {
+                const toolCall = delta.tool_calls[0];
+                if (toolCall?.function) {
+                  // 检查是否已存在此 tool call
+                  const existingCall = toolCalls.value.find(t => t.index === toolCall.index);
+                  if (existingCall) {
+                    // 追加参数
+                    if (toolCall.function.arguments) {
+                      existingCall.arguments += toolCall.function.arguments;
+                    }
+                  } else {
+                    // 新的 tool call
+                    toolCalls.value.push({
+                      index: toolCall.index,
+                      name: toolCall.function.name || 'unknown',
+                      arguments: toolCall.function.arguments || '',
+                      timestamp: Date.now(),
+                      result: null
+                    });
+                  }
+                }
+              }
+              
+              // 处理普通内容
+              if (delta?.content) {
+                content += delta.content;
                 
                 const lastMessage = messages.value[messages.value.length - 1];
                 if (lastMessage.role === 'assistant') {
@@ -958,5 +1022,96 @@ function formatDate(timestamp) {
 
 .chat-input::placeholder {
   color: var(--text-muted);
+}
+
+/* Tool Calls Panel */
+.toolcalls-panel {
+  position: fixed;
+  right: 20px;
+  top: 80px;
+  width: 350px;
+  max-height: 70vh;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.toolcalls-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  background: rgba(0, 212, 255, 0.1);
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.toolcalls-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+}
+
+.toolcall-item {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.toolcall-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.toolcall-name {
+  font-weight: 600;
+  color: var(--accent-primary);
+  font-size: var(--text-sm);
+}
+
+.toolcall-time {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.toolcall-args pre,
+.toolcall-result pre {
+  background: rgba(0, 0, 0, 0.3);
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--text-secondary);
+  overflow-x: auto;
+  margin: 0;
+}
+
+.toolcall-args {
+  margin-bottom: var(--space-sm);
+}
+
+.toolcall-result {
+  border-top: 1px dashed var(--border-color);
+  padding-top: var(--space-sm);
+}
+
+.result-label {
+  font-size: var(--text-xs);
+  color: var(--accent-success);
+  margin-bottom: var(--space-xs);
+}
+
+.chat-header__actions button.active {
+  background: rgba(0, 212, 255, 0.2);
+  color: var(--accent-primary);
 }
 </style>
