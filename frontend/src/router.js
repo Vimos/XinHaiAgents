@@ -1,16 +1,18 @@
 import {createMemoryHistory, createRouter} from 'vue-router'
-import AutoSOP from "@/views/AutoSOP.vue";
-import AutoInvoice from "@/views/AutoInvoice.vue";
-import ChatContainer from "@/views/ChatContainer.vue";
-import RAGChat from "@/views/RAGChat.vue";
-import SimulationContainer from "@/views/SimulationContainer.vue";
+import Dashboard from "@/views/Dashboard.vue"
+import ChatContainer from "@/views/ChatContainer.vue"
+import RAGChat from "@/views/RAGChat.vue"
+import SimulationContainer from "@/views/SimulationContainer.vue"
+import AutoSOP from "@/views/AutoSOP.vue"
+import AutoInvoice from "@/views/AutoInvoice.vue"
 
 const routes = [
-    {path: '/chat', component: ChatContainer},
-    {path: '/simulation', component: SimulationContainer},
-    {path: '/ragchat', component: RAGChat},
-    {path: '/autosop', component: AutoSOP},
-    {path: '/autoinvoice', component: AutoInvoice},
+    {path: '/', component: Dashboard, name: 'Dashboard'},
+    {path: '/chat', component: ChatContainer, name: 'Chat'},
+    {path: '/simulation', component: SimulationContainer, name: 'Simulation'},
+    {path: '/ragchat', component: RAGChat, name: 'RAGChat'},
+    {path: '/autosop', component: AutoSOP, name: 'AutoSOP'},
+    {path: '/autoinvoice', component: AutoInvoice, name: 'AutoInvoice'},
 ]
 
 const router = createRouter({
