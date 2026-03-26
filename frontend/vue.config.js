@@ -22,21 +22,16 @@ module.exports = defineConfig({
     },
     outputDir: 'dist',
     assetsDir: 'static',
+    
+    // Dev server config
     devServer: {
         port: 8080,
         proxy: {
-            '/api': {
-                target: 'http://localhost:5000',
-                changeOrigin: true,
-                logLevel: 'debug'
-            },
             '/openclaw': {
                 target: 'http://localhost:18789',
-                pathRewrite: { '^/openclaw': '' },
                 changeOrigin: true,
-                logLevel: 'debug',
-                onProxyReq: (proxyReq, req) => {
-                    console.log('[Proxy]', req.method, req.url, '->', 'http://localhost:18789' + proxyReq.path);
+                pathRewrite: {
+                    '^/openclaw': ''
                 }
             }
         }
