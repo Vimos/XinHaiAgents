@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 // OpenClaw Gateway HTTP API 配置
-// 使用相对路径，通过 Vue dev server 代理到 localhost:18789
 const OPENCLAW_API_URL = '/openclaw';
 const OPENCLAW_TOKEN = typeof import.meta !== 'undefined' && import.meta.env?.VITE_OPENCLAW_TOKEN 
   ? import.meta.env.VITE_OPENCLAW_TOKEN 
@@ -34,11 +33,6 @@ api.interceptors.response.use(
 
 /**
  * XinHai Chat API - OpenClaw OpenAI 接口
- * 
- * 特点：
- * 1. 只发送当前消息，不传递历史
- * 2. 支持多模态（文本 + 图片）
- * 3. 使用标准 OpenAI 格式
  */
 export class XinHaiChatAPI {
   
@@ -47,28 +41,19 @@ export class XinHaiChatAPI {
   }
 
   /**
-   * 发送消息（只发送当前消息，不传递历史）
-   * @param {string} message - 用户消息
-   * @param {string|null} imageBase64 - 图片 base64 数据（可选）
-   * @param {string} systemPrompt - 系统提示词（可选）
-   * @returns {Promise<{content: string, role: string}>}
+   * 发送消息（非流式）
    */
   async sendMessage(message, imageBase64 = null, systemPrompt = '') {
     console.log('[XinHaiChat] ========== sendMessage ==========');
-    console.log('[XinHaiChat] Has image:', !!imageBase64);
 
     try {
-      // 构建消息（只发送当前消息）
       const messages = [];
       
-      // 系统提示词（可选）
       if (systemPrompt) {
         messages.push({ role: 'system', content: systemPrompt });
       }
       
-      // 添加当前消息（支持多模态）
       if (imageBase64 && imageBase64.startsWith('data:image')) {
-        console.log('[XinHaiChat] ✅ Sending with image');
         messages.push({
           role: 'user',
           content: [
@@ -77,14 +62,9 @@ export class XinHaiChatAPI {
           ]
         });
       } else {
-        console.log('[XinHaiChat] Sending text only');
-        messages.push({
-          role: 'user',
-          content: message
-        });
+        messages.push({ role: 'user', content: message });
       }
 
-      // 发送请求到 OpenClaw
       const res = await api.post('/v1/chat/completions', {
         model: 'openclaw:main',
         messages,
@@ -95,10 +75,7 @@ export class XinHaiChatAPI {
 
       const content = res.data.choices?.[0]?.message?.content || '处理中...';
       
-      return {
-        content,
-        role: 'assistant'
-      };
+      return { content, role: 'assistant' };
 
     } catch (error) {
       console.error('[XinHaiChat] API error:', error);
@@ -107,11 +84,7 @@ export class XinHaiChatAPI {
   }
 
   /**
-   * 流式发送消息
-   * @param {string} message - 用户消息
-   * @param {string|null} imageBase64 - 图片 base64
-   * @param {Function} onChunk - 收到数据块时的回调
-   * @param {string} systemPrompt - 系统提示词
+   * 流式发送消息 - 使用 axios 的 onDownloadProgress
    */
   async sendMessageStream(message, imageBase64 = null, onChunk, systemPrompt = '') {
     console.log('[XinHaiChat] ========== sendMessageStream ==========');
@@ -135,51 +108,43 @@ export class XinHaiChatAPI {
         messages.push({ role: 'user', content: message });
       }
 
-      const res = await fetch(`${OPENCLAW_API_URL}/v1/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENCLAW_TOKEN}`
-        },
-        body: JSON.stringify({
-          model: 'openclaw:main',
-          messages,
-          temperature: 0.7,
-          max_tokens: 2000,
-          stream: true,
-          user: this.sessionKey
-        })
-      });
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder('utf-8');
       let content = '';
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n').filter(line => line.trim());
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-            
-            try {
-              const json = JSON.parse(data);
-              const delta = json.choices?.[0]?.delta?.content;
-              if (delta) {
-                content += delta;
-                onChunk(delta, content);
+      
+      await api.post('/v1/chat/completions', {
+        model: 'openclaw:main',
+        messages,
+        temperature: 0.7,
+        max_tokens: 2000,
+        stream: true,
+        user: this.sessionKey
+      }, {
+        responseType: 'text',
+        onDownloadProgress: (progressEvent) => {
+          const text = progressEvent.event.target.responseText;
+          if (!text) return;
+          
+          // 解析 SSE 格式
+          const lines = text.split('\n').filter(line => line.trim());
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+              
+              try {
+                const json = JSON.parse(data);
+                const delta = json.choices?.[0]?.delta?.content;
+                if (delta) {
+                  content += delta;
+                  onChunk(delta, content);
+                }
+              } catch (e) {
+                // 忽略解析错误
               }
-            } catch (e) {
-              // 忽略解析错误
             }
           }
         }
-      }
+      });
 
       return { content, role: 'assistant' };
 
