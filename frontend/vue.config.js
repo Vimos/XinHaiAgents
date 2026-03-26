@@ -5,7 +5,7 @@ module.exports = defineConfig({
         config
             .plugin('html')
             .tap(args => {
-                args[0].title = 'CAS-SIAT-Fintech: AutoInvoice'
+                args[0].title = 'XinHaiAgents - 心海多智能体系统'
                 return args
             })
         const svgRule = config.module.rule('svg')
@@ -21,19 +21,17 @@ module.exports = defineConfig({
     },
     outputDir: 'dist',
     assetsDir: 'static',
-    // baseUrl: IS_PRODUCTION
-    // ? 'http://cdn123.com'
-    // : '/',
-    // For Production, replace set baseUrl to CDN
-    // And set the CDN origin to `yourdomain.com/static`
-    // Whitenoise will serve once to CDN which will then cache
-    // and distribute
     devServer: {
         proxy: {
             '/api*': {
-                // Forward frontend dev server request for /api to flask dev server
+                // Flask backend API
                 target: 'http://localhost:5000/'
-                // ws: true  // Disabled - not using WebSocket
+            },
+            '/openclaw*': {
+                // OpenClaw Gateway API
+                target: 'http://localhost:18789/',
+                pathRewrite: { '^/openclaw': '' },
+                changeOrigin: true
             }
         }
     }
