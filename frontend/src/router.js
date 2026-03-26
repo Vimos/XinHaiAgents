@@ -1,5 +1,5 @@
 import {createMemoryHistory, createRouter} from 'vue-router'
-import Dashboard from "@/views/Dashboard.vue"
+import DashboardView from "@/views/DashboardView.vue"
 import ChatContainer from "@/views/ChatContainer.vue"
 import RAGChat from "@/views/RAGChat.vue"
 import SimulationContainer from "@/views/SimulationContainer.vue"
@@ -7,7 +7,7 @@ import AutoSOP from "@/views/AutoSOP.vue"
 import AutoInvoice from "@/views/AutoInvoice.vue"
 
 const routes = [
-    {path: '/', component: Dashboard, name: 'Dashboard'},
+    {path: '/', component: DashboardView, name: 'Dashboard'},
     {path: '/chat', component: ChatContainer, name: 'Chat'},
     {path: '/simulation', component: SimulationContainer, name: 'Simulation'},
     {path: '/ragchat', component: RAGChat, name: 'RAGChat'},
