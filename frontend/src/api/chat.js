@@ -1,8 +1,12 @@
 import axios from 'axios';
 
 // OpenClaw Gateway HTTP API 配置
-const OPENCLAW_API_URL = (import.meta.env.VITE_OPENCLAW_API_URL || 'http://localhost:18789').replace(/\/v1\/?$/, '');
-const OPENCLAW_TOKEN = import.meta.env.VITE_OPENCLAW_TOKEN || '';
+const OPENCLAW_API_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_OPENCLAW_API_URL 
+  ? import.meta.env.VITE_OPENCLAW_API_URL 
+  : 'http://localhost:18789').replace(/\/v1\/?$/, '');
+const OPENCLAW_TOKEN = typeof import.meta !== 'undefined' && import.meta.env?.VITE_OPENCLAW_TOKEN 
+  ? import.meta.env.VITE_OPENCLAW_TOKEN 
+  : '';
 
 const api = axios.create({
   baseURL: OPENCLAW_API_URL,
