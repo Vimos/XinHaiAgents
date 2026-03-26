@@ -1,0 +1,96 @@
+{
+  "version": "1.0.0",
+  "description": "CLPsych 2024 CoT + GPT-4优化提示词模板",
+  "language": "en",
+  "prompt_template": "You are an expert clinical psychologist specializing in suicide risk assessment. Your task is to analyze Reddit posts from r/SuicideWatch and extract evidence of suicide risk.\n\n## Risk Assessment Framework\n\nAnalyze the post across six dimensions:\n\n1. **Emotions**: Emotional states indicating distress (hopelessness, unbearable psychological pain, emptiness)\n2. **Cognitions**: Suicide-related thoughts (frequency, intent, planning, feeling like a burden)\n3. **Behaviour**: Actions and motivations (suicidal behaviors, decreased coping, self-neglect)\n4. **Interpersonal**: Social support quality (isolation, abandonment, relationship conflicts)\n5. **Mental Health**: Psychological history (depression, prior self-harm, suicide attempts, substance use)\n6. **Context**: Situational factors (recent losses, trauma, chronic illness, financial/legal problems)\n\n## Instructions\n\n1. Read the post carefully\n2. Identify evidence for each dimension (if present)\n3. Extract exact text spans that indicate risk\n4. Determine overall risk level: Low Risk / Moderate Risk / High Risk\n5. Generate a concise summary explaining the risk assessment\n\n## Output Format\n\nReturn your analysis in the following JSON structure:\n\n```json\n{\n  \"evidence_highlights\": [\n    {\n      \"text\": \"exact text span from the post\",\n      \"start_position\": 0,\n      \"end_position\": 50,\n      \"dimension\": \"Emotions\",\n      \"reasoning\": \"why this indicates risk\"\n    }\n  ],\n  \"risk_assessment\": {\n    \"level\": \"Moderate Risk\",\n    \"confidence\": 0.85,\n    \"primary_concerns\": [\"concern 1\", \"concern 2\"]\n  },\n  \"summary\": \"concise summary of risk evidence and assessment\",\n  \"protective_factors\": [\"factor 1\", \"factor 2\"]\n}\n```\n\n## Important Notes\n\n- Extract EXACT text spans from the original post (do not paraphrase)\n- Categorize each evidence by the most relevant dimension\n- Be thorough but concise\n- Consider both risk and protective factors\n\n## User Post\n\n{post_text}\n\nProvide your analysis in the specified JSON format.",
+
+  "one_shot_example": {
+    "input": {
+      "title": "I can't do this anymore",
+      "body": "I've been struggling with depression for years. Nothing seems to help, not therapy, not medication. I feel like a burden to everyone around me. My family would be better off without me. I've started researching methods. I just want the pain to stop."
+    },
+    "output": {
+      "evidence_highlights": [
+        {
+          "text": "I can't do this anymore",
+          "start_position": 0,
+          "end_position": 24,
+          "dimension": "Emotions",
+          "reasoning": "Expresses overwhelming distress and hopelessness"
+        },
+        {
+          "text": "I've been struggling with depression for years",
+          "start_position": 26,
+          "end_position": 71,
+          "dimension": "Mental Health",
+          "reasoning": "Indicates chronic mental health condition"
+        },
+        {
+          "text": "Nothing seems to help, not therapy, not medication",
+          "start_position": 73,
+          "end_position": 121,
+          "dimension": "Mental Health",
+          "reasoning": "Suggests treatment resistance"
+        },
+        {
+          "text": "I feel like a burden to everyone around me",
+          "start_position": 123,
+          "end_position": 165,
+          "dimension": "Cognitions",
+          "reasoning": "Perceived burdensomeness - strong suicide risk factor"
+        },
+        {
+          "text": "My family would be better off without me",
+          "start_position": 167,
+          "end_position": 207,
+          "dimension": "Cognitions",
+          "reasoning": "Death desire and perceived lack of value to family"
+        },
+        {
+          "text": "I've started researching methods",
+          "start_position": 209,
+          "end_position": 241,
+          "dimension": "Behaviour",
+          "reasoning": "Preparatory behavior for suicide"
+        },
+        {
+          "text": "I just want the pain to stop",
+          "start_position": 243,
+          "end_position": 271,
+          "dimension": "Emotions",
+          "reasoning": "Unbearable psychological pain"
+        }
+      ],
+      "risk_assessment": {
+        "level": "High Risk",
+        "confidence": 0.92,
+        "primary_concerns": [
+          "Active suicidal ideation with preparatory behavior",
+          "Perceived burdensomeness and hopelessness",
+          "Treatment-resistant depression",
+          "Clear desire for death"
+        ]
+      },
+      "summary": "User presents with high suicide risk characterized by chronic treatment-resistant depression, active suicidal ideation with preparatory behavior (researching methods), and strong perceived burdensomeness. The combination of hopelessness, unbearable psychological pain, and specific preparatory actions indicates imminent risk requiring immediate intervention.",
+      "protective_factors": [
+        "Expresses desire for pain relief rather than death itself",
+        "Has sought treatment in the past (therapy, medication)"
+      ]
+    }
+  },
+
+  "chain_of_thought_template": "Let's analyze this post step by step:\n\n**Step 1: Emotional State Assessment**\nWhat emotions does the user express? [Analysis]\n\n**Step 2: Cognitive Patterns**\nWhat suicide-related thoughts are present? [Analysis]\n\n**Step 3: Behavioral Indicators**\nAre there any suicide-related behaviors or changes in functioning? [Analysis]\n\n**Step 4: Social Context**\nWhat is the user's social support situation? [Analysis]\n\n**Step 5: Mental Health History**\nAre there indicators of mental health issues or prior suicidal behavior? [Analysis]\n\n**Step 6: Situational Factors**\nWhat recent life events or stressors are mentioned? [Analysis]\n\n**Step 7: Risk Level Determination**\nBased on the above analysis, what is the overall risk level? [Conclusion]\n\n**Step 8: Evidence Extraction**\nNow extract specific text spans that support this assessment. [Output]\n\nPost: {post_text}",
+
+  "chinese_prompt_template": "你是一位专业的临床心理学家，专门从事自杀风险评估。你的任务是分析Reddit r/SuicideWatch版块的帖子，提取自杀风险证据。\n\n## 风险评估框架\n\n从六个维度分析帖子：\n\n1. **情绪状态(Emotions)**：表明痛苦的情感状态（绝望、难以忍受的心理痛苦、空虚）\n2. **自杀认知(Cognitions)**：与自杀相关的想法（频率、意图、计划、感觉自己是负担）\n3. **行为动机(Behaviour)**：行为和动机（自杀行为、应对能力下降、自我忽视）\n4. **社会支持(Interpersonal)**：社会支持质量（孤立、被抛弃、关系冲突）\n5. **精神健康(Mental Health)**：心理健康史（抑郁、既往自伤、自杀未遂、物质滥用）\n6. **情境因素(Context)**：情境因素（近期丧失、创伤、慢性疾病、经济/法律问题）\n\n## 分析步骤\n\n1. 仔细阅读帖子\n2. 识别每个维度的证据（如存在）\n3. 提取表明风险的确切文本片段\n4. 确定整体风险等级：Low Risk / Moderate Risk / High Risk\n5. 生成简洁的摘要，解释风险评估\n\n## 输出格式\n\n以以下JSON结构返回分析结果：\n\n```json\n{\n  \"evidence_highlights\": [\n    {\n      \"text\": \"帖子中的确切文本片段\",\n      \"start_position\": 0,\n      \"end_position\": 50,\n      \"dimension\": \"Emotions\",\n      \"reasoning\": \"为什么这表明风险\"\n    }\n  ],\n  \"risk_assessment\": {\n    \"level\": \"Moderate Risk\",\n    \"confidence\": 0.85,\n    \"primary_concerns\": [\"关注点1\", \"关注点2\"]\n  },\n  \"summary\": \"风险证据和评估的简洁摘要\",\n  \"protective_factors\": [\"保护因素1\", \"保护因素2\"]\n}\n```\n\n## 重要提示\n\n- 提取帖子原文的确切文本片段（不要改写）\n- 按最相关的维度对每个证据进行分类\n- 全面但简洁\n- 同时考虑风险因素和保护因素\n\n## 用户帖子\n\n{post_text}\n\n请以指定的JSON格式提供分析。",
+
+  "granularity_variants": {
+    "phrase_level": {
+      "instruction": "Extract concise phrases or short expressions that indicate suicide risk. Focus on specific, impactful phrases rather than full sentences.",
+      "example": "Extract: 'completely hopeless', 'better off without me', 'end the pain'"
+    },
+    "sentence_level": {
+      "instruction": "Extract complete sentences that indicate suicide risk. This provides more context but may include less relevant information.",
+      "example": "Extract: 'I feel completely hopeless and don't see any point in continuing.'"
+    }
+  }
+}
