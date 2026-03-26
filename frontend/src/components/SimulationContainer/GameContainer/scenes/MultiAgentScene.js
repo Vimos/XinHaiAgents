@@ -393,7 +393,7 @@ export class MultiAgentScene extends Phaser.Scene {
         const agent = this.agents.get(agentId);
         if (!agent) return;
         
-        const { container, config } = agent;
+        const { container } = agent;
         
         // 创建对话气泡
         const bubbleY = -70;

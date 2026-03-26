@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import PhaserGame from '@/components/SimulationContainer/GameContainer/PhaserGame.vue';
 import XhCard from '@/components/ui/XhCard.vue';
 import XhButton from '@/components/ui/XhButton.vue';
