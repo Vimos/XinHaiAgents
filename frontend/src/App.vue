@@ -89,9 +89,13 @@ const username = ref('Researcher')
 
 const navItems = [
   { path: '/', label: '首页', icon: '🏠' },
-  { path: '/chat', label: '对话', icon: '💬' },
-  { path: '/simulation', label: '模拟', icon: '🎭' },
-  { path: '/ragchat', label: 'RAG对话', icon: '📚' },
+  { path: '/chat', label: '心理咨询', icon: '💬' },
+  { path: '/cbt', label: 'CBT治疗', icon: '🧠' },
+  { path: '/suicide-risk', label: '风险评估', icon: '⚠️' },
+  { path: '/empathy', label: '共情对话', icon: '❤️' },
+  { path: '/cpsycoun', label: '中文咨询', icon: '📖' },
+  { path: '/simulation', label: '多智能体', icon: '🎭' },
+  { path: '/ragchat', label: 'RAG问答', icon: '📚' },
 ]
 
 const userInitials = computed(() => {
