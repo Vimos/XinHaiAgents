@@ -233,15 +233,11 @@ async function sendMessage() {
   isLoading.value = true;
   
   try {
-    let assistantContent = '';
-    
     // Use streaming API
     await chatApi.sendMessageStream(
       userMessage,
       imageToSend,
       (delta, fullContent) => {
-        assistantContent = fullContent;
-        
         // Update or create assistant message
         const lastMessage = messages.value[messages.value.length - 1];
         if (lastMessage.role === 'assistant') {

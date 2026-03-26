@@ -151,7 +151,7 @@ export class XinHaiChatAPI {
       const reader = res.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let content = '';
-
+      // eslint-disable-next-line no-constant-condition
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
