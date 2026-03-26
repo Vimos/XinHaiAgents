@@ -19,11 +19,21 @@ module.exports = defineConfig({
             .end()
             .use('vue-svg-loader')
             .loader('vue-svg-loader')
+        
+        // 注入环境变量到 DefinePlugin
+        config.plugin('define').tap(args => {
+            const env = args[0] || {}
+            env['process.env'] = {
+                ...(env['process.env'] || {}),
+                VUE_APP_OPENCLAW_TOKEN: JSON.stringify(process.env.VUE_APP_OPENCLAW_TOKEN || ''),
+                VITE_OPENCLAW_TOKEN: JSON.stringify(process.env.VITE_OPENCLAW_TOKEN || '')
+            }
+            return [env]
+        })
     },
     outputDir: 'dist',
     assetsDir: 'static',
     
-    // Dev server config
     devServer: {
         port: 8080,
         proxy: {
