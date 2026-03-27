@@ -528,6 +528,9 @@ async function sendMessage() {
                     timestamp: Date.now()
                   });
                 }
+                
+                // 自动滚动到底部
+                scrollToBottom();
               }
             } catch (e) {
               // Ignore parse errors for incomplete JSON chunks
