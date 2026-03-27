@@ -398,9 +398,9 @@ async def chat_stream(request: ChatRequest, current_user: dict = Depends(get_cur
                     "Authorization": "Bearer 171f137313b83a6df17ee17a63060830fbba5901ecf09dec"
                 }
             ) as response:
-                async for chunk in response.aiter_text():
-                    yield f"data: {chunk}\n\n"
-                yield "data: [DONE]\n\n"
+                # 直接透传 OpenClaw 的 SSE 数据，不再包装
+                async for chunk in response.aiter_bytes():
+                    yield chunk
     
     return StreamingResponse(generate(), media_type="text/event-stream")
 
