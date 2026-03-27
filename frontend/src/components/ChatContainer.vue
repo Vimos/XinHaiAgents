@@ -468,6 +468,7 @@ async function sendMessage() {
     
     let content = '';
     let processedLength = 0;  // 记录已处理的数据长度
+    let buffer = '';  // 缓冲区，用于处理被分割的数据行
     
     // 使用后端认证服务的 /api/chat/stream 端点
     await api.post('/api/chat/stream', {
@@ -484,11 +485,19 @@ async function sendMessage() {
         const newText = text.slice(processedLength);
         processedLength = text.length;
         
-        const lines = newText.split('\n').filter(line => line.trim());
+        // 将新数据追加到缓冲区
+        buffer += newText;
+        
+        // 按行分割，但保留最后一个不完整的行
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';  // 保留不完整的最后一行
         
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
+          const trimmedLine = line.trim();
+          if (!trimmedLine) continue;
+          
+          if (trimmedLine.startsWith('data: ')) {
+            const data = trimmedLine.slice(6);
             if (data === '[DONE]') continue;
             
             try {
