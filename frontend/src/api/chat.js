@@ -1,39 +1,10 @@
 import axios from 'axios';
 
-// OpenClaw Gateway HTTP API 配置
-const OPENCLAW_API_URL = '/openclaw';
+// OpenClaw Gateway HTTP API 配置 - 硬编码生产环境地址
+const OPENCLAW_API_URL = 'https://api.xinhai.co';
 
-// ===== 临时方案：硬编码 Token =====
-// 由于 .env 文件加载有问题，暂时使用硬编码
-// TODO: 修复后改回从环境变量读取
-const FALLBACK_TOKEN = '171f137313b83a6df17ee17a63060830fbba5901ecf09dec';
-
-// 支持多种环境变量命名（Vue CLI, Vite）
-function getToken() {
-  // Vue CLI 使用 process.env
-  if (typeof process !== 'undefined' && process.env) {
-    const token = process.env.VUE_APP_OPENCLAW_TOKEN?.trim()
-      || process.env.VITE_OPENCLAW_TOKEN?.trim()
-      || process.env.OPENCLAW_TOKEN?.trim();
-    if (token) return token;
-  }
-  
-  // Vite 使用 import.meta.env
-  if (typeof import.meta !== 'undefined' && import.meta.env) {
-    const token = import.meta.env.VITE_OPENCLAW_TOKEN?.trim()
-      || import.meta.env.VUE_APP_OPENCLAW_TOKEN?.trim()
-      || import.meta.env.OPENCLAW_TOKEN?.trim();
-    if (token) return token;
-  }
-  
-  return '';
-}
-
-const OPENCLAW_TOKEN = getToken() || FALLBACK_TOKEN;
-
-console.log('[XinHaiChat] Token:', OPENCLAW_TOKEN === FALLBACK_TOKEN 
-  ? '⚠️ using fallback (env not loaded)' 
-  : '✓ from env');
+// ===== Token =====
+const OPENCLAW_TOKEN = '171f137313b83a6df17ee17a63060830fbba5901ecf09dec';
 
 const api = axios.create({
   baseURL: OPENCLAW_API_URL,
@@ -181,3 +152,4 @@ export class XinHaiChatAPI {
 }
 
 export const chatApi = new XinHaiChatAPI();
+export { api };

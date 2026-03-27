@@ -208,7 +208,7 @@
 <script setup>
 import { ref, computed, nextTick, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
+import { api } from '@/api/chat.js';
 import XhAvatar from '@/components/ui/XhAvatar.vue';
 import XhButton from '@/components/ui/XhButton.vue';
 import { 
@@ -276,19 +276,6 @@ const messagesContainer = ref(null);
 const fileInput = ref(null);
 const showHistory = ref(false);
 const sessions = ref([]);
-
-// API 配置 - 直接硬编码生产环境地址
-const API_URL = 'https://api.xinhai.co';  // 修改为你的实际API地址
-const API_TOKEN = '171f137313b83a6df17ee17a63060830fbba5901ecf09dec';  // 直接写死token
-
-const api = axios.create({
-  baseURL: API_URL,
-  timeout: 300000,
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${API_TOKEN}`
-  },
-});
 
 // Computed
 const canSend = computed(() => {
