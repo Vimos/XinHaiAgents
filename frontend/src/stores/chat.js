@@ -28,7 +28,7 @@ export const useChatStore = defineStore('chat', () => {
     if (!token) return;
     
     try {
-      const res = await fetch(`${API_URL}/chat/history`, {
+      const res = await fetch(`${API_URL}/api/chat/history`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -66,7 +66,7 @@ export const useChatStore = defineStore('chat', () => {
     try {
       loading.value = true;
       
-      const res = await fetch(`${API_URL}/chat/history/${sessionKey}`, {
+      const res = await fetch(`${API_URL}/api/chat/history/${sessionKey}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -144,7 +144,7 @@ export const useChatStore = defineStore('chat', () => {
     if (!token) return;
     
     try {
-      await fetch(`${API_URL}/chat/history`, {
+      await fetch(`${API_URL}/api/chat/history`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -171,7 +171,7 @@ export const useChatStore = defineStore('chat', () => {
     if (!token) return;
     
     try {
-      await fetch(`${API_URL}/chat/history/${sessionKey}`, {
+      await fetch(`${API_URL}/api/chat/history/${sessionKey}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -203,7 +203,7 @@ export const useChatStore = defineStore('chat', () => {
     if (!token) return;
     
     try {
-      await fetch(`${API_URL}/chat/history/${sessionKey}/title`, {
+      await fetch(`${API_URL}/api/chat/history/${sessionKey}/title`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -280,7 +280,7 @@ export const useChatStore = defineStore('chat', () => {
     // \u6dfb\u52a0\u7528\u6237消息
     await addMessage('user', message, imageBase64);
     
-    const res = await fetch(`${API_URL}/chat/stream`, {
+    const res = await fetch(`${API_URL}/api/chat/stream`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

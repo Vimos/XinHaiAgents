@@ -22,7 +22,7 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = '';
     
     try {
-      const res = await fetch(`${API_URL}/auth/register`, {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password })
@@ -58,7 +58,7 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = '';
     
     try {
-      const res = await fetch(`${API_URL}/auth/login`, {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -109,7 +109,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (token.value && user.value) {
       try {
         // \u9a8c\u8bc1 token \u662f\u5426\u6709\u6548
-        const res = await fetch(`${API_URL}/auth/me`, {
+        const res = await fetch(`${API_URL}/api/auth/me`, {
           headers: { 'Authorization': `Bearer ${token.value}` }
         });
         

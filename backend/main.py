@@ -150,7 +150,7 @@ def get_or_create_session_key(user_id: int) -> str:
 
 # ============ 认证 API ============
 
-@app.post("/auth/register")
+@app.post("/api/auth/register")
 def register(user: UserRegister):
     """用户注册"""
     conn = get_db()
@@ -173,7 +173,7 @@ def register(user: UserRegister):
     
     return {"token": token, "user_id": user_id, "username": user.username}
 
-@app.post("/auth/login")
+@app.post("/api/auth/login")
 def login(credentials: UserLogin):
     """用户登录"""
     conn = get_db()
@@ -193,7 +193,7 @@ def login(credentials: UserLogin):
     
     return {"token": token, "user_id": user['id'], "username": user['username']}
 
-@app.get("/auth/me")
+@app.get("/api/auth/me")
 def get_me(current_user: dict = Depends(get_current_user)):
     """获取当前用户信息"""
     return {
@@ -203,7 +203,7 @@ def get_me(current_user: dict = Depends(get_current_user)):
 
 # ============ 对话历史 API ============
 
-@app.get("/chat/history")
+@app.get("/api/chat/history")
 def get_chat_history(current_user: dict = Depends(get_current_user)):
     """获取用户的所有对话历史"""
     conn = get_db()
@@ -231,7 +231,7 @@ def get_chat_history(current_user: dict = Depends(get_current_user)):
     conn.close()
     return {"sessions": sessions}
 
-@app.get("/chat/history/{session_key}")
+@app.get("/api/chat/history/{session_key}")
 def get_chat_session(session_key: str, current_user: dict = Depends(get_current_user)):
     """获取特定会话的完整对话内容"""
     conn = get_db()
@@ -256,7 +256,7 @@ def get_chat_session(session_key: str, current_user: dict = Depends(get_current_
         "updatedAt": row['updated_at']
     }
 
-@app.post("/chat/history")
+@app.post("/api/chat/history")
 def save_chat_history(request: SaveChatRequest, current_user: dict = Depends(get_current_user)):
     """保存或更新对话历史"""
     conn = get_db()
@@ -285,7 +285,7 @@ def save_chat_history(request: SaveChatRequest, current_user: dict = Depends(get
     conn.close()
     return {"message": "Saved"}
 
-@app.delete("/chat/history/{session_key}")
+@app.delete("/api/chat/history/{session_key}")
 def delete_chat_session(session_key: str, current_user: dict = Depends(get_current_user)):
     """软删除对话历史"""
     conn = get_db()
@@ -300,7 +300,7 @@ def delete_chat_session(session_key: str, current_user: dict = Depends(get_curre
     conn.close()
     return {"message": "Deleted"}
 
-@app.patch("/chat/history/{session_key}/title")
+@app.patch("/api/chat/history/{session_key}/title")
 def update_chat_title(session_key: str, request: UpdateTitleRequest,
                      current_user: dict = Depends(get_current_user)):
     """修改对话标题"""
@@ -318,7 +318,7 @@ def update_chat_title(session_key: str, request: UpdateTitleRequest,
 
 # ============ XinHai 智能体代理 ============
 
-@app.post("/chat")
+@app.post("/api/chat")
 async def chat(request: ChatRequest, current_user: dict = Depends(get_current_user)):
     """代理到 XinHai 智能体的聊天接口"""
     user_id = current_user['user_id']
@@ -359,7 +359,7 @@ async def chat(request: ChatRequest, current_user: dict = Depends(get_current_us
         except httpx.RequestError as e:
             raise HTTPException(503, f"XinHai agent unavailable: {str(e)}")
 
-@app.post("/chat/stream")
+@app.post("/api/chat/stream")
 async def chat_stream(request: ChatRequest, current_user: dict = Depends(get_current_user)):
     """流式聊天接口（SSE）"""
     user_id = current_user['user_id']
@@ -405,7 +405,7 @@ async def chat_stream(request: ChatRequest, current_user: dict = Depends(get_cur
     return StreamingResponse(generate(), media_type="text/event-stream")
 
 # ============ 健康检查 ============
-@app.get("/health")
+@app.get("/api/health")
 def health_check():
     return {"status": "ok"}
 
