@@ -1,12 +1,10 @@
-// api/chat.js - \u4f7f\u7528 Pinia store \u8fdb\u884c\u8ba4\u8bc1
-import { useAuthStore } from '@/stores/auth';
+// api/chat.js - 使用 Pinia store 进行认证
 import { useChatStore } from '@/stores/chat';
 
-const API_URL = 'https://chat.xinhai.co';
 const OPENCLAW_API_URL = 'https://chat.xinhai.co';
 
 /**
- * \u53d1\u9001\u6d88\u606f\uff08\u975e\u6d41\u5f0f\uff09
+ * 发送消息（非流式）
  */
 export async function sendMessage(message, imageBase64 = null, systemPrompt = '') {
   const chatStore = useChatStore();
@@ -14,7 +12,7 @@ export async function sendMessage(message, imageBase64 = null, systemPrompt = ''
 }
 
 /**
- * \u6d41\u5f0f\u53d1\u9001\u6d88\u606f
+ * 流式发送消息
  */
 export async function sendMessageStream(message, onChunk, imageBase64 = null, systemPrompt = '') {
   const chatStore = useChatStore();
@@ -22,7 +20,7 @@ export async function sendMessageStream(message, onChunk, imageBase64 = null, sy
 }
 
 /**
- * XinHai Chat API \u7c7b - \u517c\u5bb9\u65e7\u4ee3\u7801
+ * XinHai Chat API 类 - 兼容旧代码
  */
 export class XinHaiChatAPI {
   constructor() {
@@ -61,3 +59,6 @@ export class XinHaiChatAPI {
 }
 
 export const chatApi = new XinHaiChatAPI();
+
+// eslint-disable-next-line no-unused-vars
+export { OPENCLAW_API_URL };
