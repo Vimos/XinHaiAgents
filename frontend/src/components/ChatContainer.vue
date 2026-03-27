@@ -467,6 +467,7 @@ async function sendMessage() {
     }
     
     let content = '';
+    let processedLength = 0;  // 记录已处理的数据长度
     
     // 使用后端认证服务的 /api/chat/stream 端点
     await api.post('/api/chat/stream', {
@@ -477,9 +478,13 @@ async function sendMessage() {
       responseType: 'text',
       onDownloadProgress: (progressEvent) => {
         const text = progressEvent.event.target.responseText;
-        if (!text) return;
+        if (!text || text.length <= processedLength) return;
         
-        const lines = text.split('\n').filter(line => line.trim());
+        // 只处理新接收到的数据
+        const newText = text.slice(processedLength);
+        processedLength = text.length;
+        
+        const lines = newText.split('\n').filter(line => line.trim());
         
         for (const line of lines) {
           if (line.startsWith('data: ')) {
