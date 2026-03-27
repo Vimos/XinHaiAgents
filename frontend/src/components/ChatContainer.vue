@@ -277,11 +277,9 @@ const fileInput = ref(null);
 const showHistory = ref(false);
 const sessions = ref([]);
 
-// API 配置
-const API_URL = process.env.VUE_APP_OPENCLAW_API_URL || '/openclaw';
-const API_TOKEN = process.env.VUE_APP_OPENCLAW_TOKEN 
-  || process.env.VITE_OPENCLAW_TOKEN 
-  || '';
+// API 配置 - 直接硬编码生产环境地址
+const API_URL = 'https://api.xinhai.co';  // 修改为你的实际API地址
+const API_TOKEN = '171f137313b83a6df17ee17a63060830fbba5901ecf09dec';  // 直接写死token
 
 const api = axios.create({
   baseURL: API_URL,
