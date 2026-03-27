@@ -2,13 +2,13 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAuthStore } from './auth';
 
-const API_URL = 'https://chat.xinhai.co';  // \u8ba4\u8bc1\u670d\u52a1\u5730\u5740
+const API_URL = 'https://chat.xinhai.co';  // 认证服务地址
 
 export const useChatStore = defineStore('chat', () => {
   // ============ State ============
-  const sessions = ref([]);  // \u4f1a\u8bdd\u5217\u8868
-  const currentSession = ref(null);  // \u5f53\u524d\u4f1a\u8bdd
-  const messages = ref([]);  // \u5f53\u524d\u5bf9\u8bdd\u6d88\u606f
+  const sessions = ref([]);  // 会话列表
+  const currentSession = ref(null);  // 当前会话
+  const messages = ref([]);  // 当前对话消息
   const loading = ref(false);
   
   // ============ Getters ============
@@ -19,7 +19,7 @@ export const useChatStore = defineStore('chat', () => {
   // ============ Actions ============
   
   /**
-   * \u767b\u5f55\u540e\u6062\u590d\uff1a\u62c9\u53d6\u7528\u6237\u7684\u6240\u6709\u4f1a\u8bdd\u5217\u8868
+   * \u767b\u5f55\u540e\u6062\u590d\uff1a\u62c9\u53d6\u7528\u6237\u7684\u6240\u6709会话列表
    */
   async function restoreSessions() {
     const authStore = useAuthStore();
@@ -37,25 +37,25 @@ export const useChatStore = defineStore('chat', () => {
       const data = await res.json();
       sessions.value = data.sessions;
       
-      // \u5982\u679c\u6709\u5386\u53f2\u4f1a\u8bdd\uff0c\u52a0\u8f7d\u6700\u8fd1\u7684\u4e00\u4e2a
+      // \u5982\u679c\u6709\u5386\u53f2会话\uff0c加载\u6700\u8fd1\u7684\u4e00\u4e2a
       if (sessions.value.length > 0) {
         await loadSession(sessions.value[0].sessionKey);
       } else {
-        // \u6ca1\u6709\u5386\u53f2\u5219\u521b\u5efa\u65b0\u4f1a\u8bdd
+        // \u6ca1\u6709\u5386\u53f2\u5219创建新会话
         await createNewSession();
       }
       
       return data.sessions;
     } catch (error) {
       console.error('Restore sessions failed:', error);
-      // \u5931\u8d25\u65f6\u521b\u5efa\u65b0\u4f1a\u8bdd
+      // 失败\u65f6创建新会话
       await createNewSession();
       return [];
     }
   }
   
   /**
-   * \u52a0\u8f7d\u7279\u5b9a\u4f1a\u8bdd
+   * 加载\u7279\u5b9a会话
    */
   async function loadSession(sessionKey) {
     const authStore = useAuthStore();
@@ -72,7 +72,7 @@ export const useChatStore = defineStore('chat', () => {
       
       if (!res.ok) {
         if (res.status === 404) {
-          // \u4f1a\u8bdd\u4e0d\u5b58\u5728\uff0c\u521b\u5efa\u65b0\u7684
+          // 会话\u4e0d\u5b58\u5728\uff0c创建新\u7684
           await createNewSession();
           return;
         }
@@ -96,25 +96,25 @@ export const useChatStore = defineStore('chat', () => {
   }
   
   /**
-   * \u521b\u5efa\u65b0\u4f1a\u8bdd
+   * 创建新会话
    */
   async function createNewSession(title = null) {
     const sessionKey = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     currentSession.value = {
       sessionKey,
-      title: title || '\u65b0\u5bf9\u8bdd'
+      title: title || '新对话'
     };
     messages.value = [];
     
-    // \u53ef\u9009\uff1a\u7acb\u5373\u4fdd\u5b58\u5230\u540e\u7aef\uff08\u7a7a\u4f1a\u8bdd\uff09
+    // \u53ef\u9009\uff1a\u7acb\u5373保存\u5230\u540e\u7aef\uff08\u7a7a会话\uff09
     await saveCurrentSession();
     
     return sessionKey;
   }
   
   /**
-   * \u6dfb\u52a0\u6d88\u606f\uff08\u81ea\u52a8\u4fdd\u5b58\uff09
+   * \u6dfb\u52a0消息\uff08\u81ea\u52a8保存\uff09
    */
   async function addMessage(role, content, image = null) {
     const message = {
@@ -126,14 +126,14 @@ export const useChatStore = defineStore('chat', () => {
     
     messages.value.push(message);
     
-    // \u81ea\u52a8\u4fdd\u5b58\u5230\u540e\u7aef
+    // \u81ea\u52a8保存\u5230\u540e\u7aef
     await saveCurrentSession();
     
     return message;
   }
   
   /**
-   * \u4fdd\u5b58\u5f53\u524d\u4f1a\u8bdd\u5230\u540e\u7aef
+   * 保存当前会话\u5230\u540e\u7aef
    */
   async function saveCurrentSession() {
     if (!currentSession.value) return;
@@ -162,7 +162,7 @@ export const useChatStore = defineStore('chat', () => {
   }
   
   /**
-   * \u5220\u9664\u4f1a\u8bdd
+   * 删除会话
    */
   async function deleteSession(sessionKey) {
     const authStore = useAuthStore();
@@ -176,10 +176,10 @@ export const useChatStore = defineStore('chat', () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      // \u4ece\u672c\u5730\u5217\u8868\u79fb\u9664
+      // \u4ece\u672c\u5730列表\u79fb\u9664
       sessions.value = sessions.value.filter(s => s.sessionKey !== sessionKey);
       
-      // \u5982\u679c\u5220\u9664\u7684\u662f\u5f53\u524d\u4f1a\u8bdd\uff0c\u5207\u6362\u5230\u5176\u4ed6\u4f1a\u8bdd\u6216\u521b\u5efa\u65b0\u4f1a\u8bdd
+      // \u5982\u679c删除\u7684\u662f当前会话\uff0c\u5207\u6362\u5230\u5176\u4ed6会话\u6216创建新会话
       if (currentSession.value?.sessionKey === sessionKey) {
         if (sessions.value.length > 0) {
           await loadSession(sessions.value[0].sessionKey);
@@ -194,7 +194,7 @@ export const useChatStore = defineStore('chat', () => {
   }
   
   /**
-   * \u4fee\u6539\u4f1a\u8bdd\u6807\u9898
+   * \u4fee\u6539会话标题
    */
   async function updateSessionTitle(sessionKey, title) {
     const authStore = useAuthStore();
@@ -212,7 +212,7 @@ export const useChatStore = defineStore('chat', () => {
         body: JSON.stringify({ title })
       });
       
-      // \u66f4\u65b0\u672c\u5730
+      // \u66f4新\u672c\u5730
       const session = sessions.value.find(s => s.sessionKey === sessionKey);
       if (session) session.title = title;
       if (currentSession.value?.sessionKey === sessionKey) {
@@ -224,7 +224,7 @@ export const useChatStore = defineStore('chat', () => {
   }
   
   /**
-   * \u6e05\u7a7a\u5f53\u524d\u5bf9\u8bdd\uff08\u4f46\u4e0d\u5220\u9664\u4f1a\u8bdd\uff09
+   * 清空当前对话\uff08\u4f46\u4e0d删除会话\uff09
    */
   async function clearCurrentMessages() {
     messages.value = [];
@@ -232,7 +232,7 @@ export const useChatStore = defineStore('chat', () => {
   }
   
   /**
-   * \u53d1\u9001\u6d88\u606f\u5e76\u83b7\u53d6\u56de\u590d
+   * 发送消息\u5e76\u83b7\u53d6\u56de\u590d
    */
   async function sendMessage(message, imageBase64 = null, systemPrompt = '') {
     const authStore = useAuthStore();
@@ -240,7 +240,7 @@ export const useChatStore = defineStore('chat', () => {
     
     if (!token) throw new Error('Not authenticated');
     
-    // \u6dfb\u52a0\u7528\u6237\u6d88\u606f
+    // \u6dfb\u52a0\u7528\u6237消息
     await addMessage('user', message, imageBase64);
     
     // \u8c03\u7528 API
@@ -260,16 +260,16 @@ export const useChatStore = defineStore('chat', () => {
     if (!res.ok) throw new Error('Chat request failed');
     
     const data = await res.json();
-    const reply = data.choices?.[0]?.message?.content || '\u62b1\u6b49\uff0c\u51fa\u9519\u4e86';
+    const reply = data.choices?.[0]?.message?.content || '抱歉\uff0c出错\u4e86';
     
-    // \u6dfb\u52a0\u52a9\u624b\u6d88\u606f
+    // \u6dfb\u52a0\u52a9\u624b消息
     await addMessage('assistant', reply);
     
     return reply;
   }
   
   /**
-   * \u6d41\u5f0f\u53d1\u9001\u6d88\u606f
+   * \u6d41\u5f0f发送消息
    */
   async function sendMessageStream(message, onChunk, imageBase64 = null, systemPrompt = '') {
     const authStore = useAuthStore();
@@ -277,7 +277,7 @@ export const useChatStore = defineStore('chat', () => {
     
     if (!token) throw new Error('Not authenticated');
     
-    // \u6dfb\u52a0\u7528\u6237\u6d88\u606f
+    // \u6dfb\u52a0\u7528\u6237消息
     await addMessage('user', message, imageBase64);
     
     const res = await fetch(`${API_URL}/chat/stream`, {
@@ -311,7 +311,7 @@ export const useChatStore = defineStore('chat', () => {
         if (line.startsWith('data: ')) {
           const data = line.slice(6);
           if (data === '[DONE]') {
-            // \u6d41\u7ed3\u675f\uff0c\u4fdd\u5b58\u5b8c\u6574\u6d88\u606f
+            // \u6d41\u7ed3\u675f\uff0c保存\u5b8c\u6574消息
             await addMessage('assistant', fullContent);
             return fullContent;
           }
@@ -330,7 +330,7 @@ export const useChatStore = defineStore('chat', () => {
       }
     }
     
-    // \u5982\u679c\u6ca1\u6709 [DONE]\uff0c\u4fdd\u5b58\u6700\u540e\u7684\u5185\u5bb9
+    // \u5982\u679c\u6ca1\u6709 [DONE]\uff0c保存\u6700\u540e\u7684\u5185\u5bb9
     if (fullContent) {
       await addMessage('assistant', fullContent);
     }

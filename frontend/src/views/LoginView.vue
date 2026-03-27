@@ -3,8 +3,8 @@
     <div class="login-box">
       <div class="logo">
         <span class="icon">🌊</span>
-        <h1>XinHai \u667a\u80fd\u4f53</h1>
-        <p class="subtitle">\u767b\u5f55\u540e\u5f00\u59cb\u5bf9\u8bdd</p>
+        <h1>XinHai 智能体</h1>
+        <p class="subtitle">登录后开始对话</p>
       </div>
       
       <div class="tabs">
@@ -12,13 +12,13 @@
           :class="['tab', { active: isLogin }]" 
           @click="isLogin = true"
         >
-          \u767b\u5f55
+          登录
         </button>
         <button 
           :class="['tab', { active: !isLogin }]" 
           @click="isLogin = false"
         >
-          \u6ce8\u518c
+          注册
         </button>
       </div>
       
@@ -27,7 +27,7 @@
           <input 
             v-model="form.username" 
             type="text"
-            placeholder="\u7528\u6237\u540d" 
+            placeholder="用户名" 
             required 
             :disabled="loading"
           />
@@ -37,7 +37,7 @@
           <input 
             v-model="form.email" 
             type="email"
-            placeholder="\u90ae\u7bb1" 
+            placeholder="邮箱" 
             required 
             :disabled="loading"
           />
@@ -47,7 +47,7 @@
           <input 
             v-model="form.password" 
             type="password" 
-            placeholder="\u5bc6\u7801" 
+            placeholder="密码" 
             required 
             :disabled="loading"
           />
@@ -55,7 +55,7 @@
         
         <button type="submit" class="submit-btn" :disabled="loading">
           <span v-if="loading" class="spinner"></span>
-          <span v-else>{{ isLogin ? '\u767b\u5f55' : '\u6ce8\u518c' }}</span>
+          <span v-else>{{ isLogin ? '登录' : '注册' }}</span>
         </button>
       </form>
       
@@ -93,10 +93,10 @@ async function handleSubmit() {
       await authStore.register(form.username, form.email, form.password);
     }
     
-    // \u767b\u5f55/\u6ce8\u518c\u6210\u529f\uff0c\u8df3\u8f6c\u5230\u4e3b\u9875
+    // 登录/注册成功，跳转到主页
     router.push('/');
   } catch (err) {
-    error.value = err.message || '\u64cd\u4f5c\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5';
+    error.value = err.message || '操作失败，请重试';
   } finally {
     loading.value = false;
   }

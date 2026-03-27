@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useChatStore } from './chat';
 
-const API_URL = 'https://chat.xinhai.co';  // \u8ba4\u8bc1\u670d\u52a1\u5730\u5740
+const API_URL = 'https://chat.xinhai.co';  // 认证服务地址
 
 export const useAuthStore = defineStore('auth', () => {
   // ============ State ============
@@ -30,7 +30,7 @@ export const useAuthStore = defineStore('auth', () => {
       
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.detail || '\u6ce8\u518c\u5931\u8d25');
+        throw new Error(err.detail || '注册失败');
       }
       
       const data = await res.json();
@@ -40,7 +40,7 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(user.value));
       
-      // \u767b\u5f55\u6210\u529f\u540e\u6062\u590d\u5bf9\u8bdd\u5386\u53f2
+      // 登录成功后恢复对话历史
       const chatStore = useChatStore();
       await chatStore.restoreSessions();
       
@@ -66,7 +66,7 @@ export const useAuthStore = defineStore('auth', () => {
       
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.detail || '\u767b\u5f55\u5931\u8d25');
+        throw new Error(err.detail || '登录失败');
       }
       
       const data = await res.json();
@@ -76,7 +76,7 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(user.value));
       
-      // \u767b\u5f55\u6210\u529f\u540e\u81ea\u52a8\u6062\u590d\u5bf9\u8bdd\u5386\u53f2
+      // 登录成功后\u81ea\u52a8恢复对话历史
       const chatStore = useChatStore();
       await chatStore.restoreSessions();
       
@@ -104,7 +104,7 @@ export const useAuthStore = defineStore('auth', () => {
     };
   }
   
-  // \u521d\u59cb\u5316\uff1a\u68c0\u67e5\u662f\u5426\u5df2\u767b\u5f55
+  // \u521d\u59cb\u5316\uff1a\u68c0\u67e5\u662f\u5426\u5df2登录
   async function init() {
     if (token.value && user.value) {
       try {
@@ -119,7 +119,7 @@ export const useAuthStore = defineStore('auth', () => {
           return false;
         }
         
-        // \u6062\u590d\u5bf9\u8bdd\u5386\u53f2
+        // 恢复对话历史
         const chatStore = useChatStore();
         await chatStore.restoreSessions();
         return true;
