@@ -83,6 +83,7 @@ class ChatRequest(BaseModel):
     message: str
     image_base64: str | None = None
     system_prompt: str = ""
+    sidebar: str = "chat"  # 边栏标识，用于区分不同场景的会话
 
 class SaveChatRequest(BaseModel):
     session_key: str
@@ -124,29 +125,10 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     except jwt.InvalidTokenError:
         raise HTTPException(401, "Invalid token")
 
-def get_or_create_session_key(user_id: int) -> str:
-    """获取或创建用户的 session key"""
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    cursor.execute(
-        "SELECT session_key FROM chat_histories WHERE user_id=? AND is_active=1 ORDER BY updated_at DESC LIMIT 1",
-        (user_id,)
-    )
-    row = cursor.fetchone()
-    
-    if row:
-        session_key = row['session_key']
-        cursor.execute(
-            "UPDATE chat_histories SET updated_at=? WHERE session_key=?",
-            (datetime.now(), session_key)
-        )
-    else:
-        session_key = f"xinhai_user_{user_id}_{uuid.uuid4().hex[:8]}"
-    
-    conn.commit()
-    conn.close()
-    return session_key
+def get_or_create_session_key(user_id: int, sidebar: str = "chat") -> str:
+    """获取或创建用户的 session key，按 sidebar 区分"""
+    # 每个用户 + 每个边栏 = 独立的 session_key
+    return f"xinhai_user_{user_id}_{sidebar}"
 
 # ============ 认证 API ============
 
@@ -322,7 +304,7 @@ def update_chat_title(session_key: str, request: UpdateTitleRequest,
 async def chat(request: ChatRequest, current_user: dict = Depends(get_current_user)):
     """代理到 XinHai 智能体的聊天接口"""
     user_id = current_user['user_id']
-    session_key = get_or_create_session_key(user_id)
+    session_key = get_or_create_session_key(user_id, request.sidebar)
     
     messages = []
     if request.system_prompt:
@@ -363,7 +345,7 @@ async def chat(request: ChatRequest, current_user: dict = Depends(get_current_us
 async def chat_stream(request: ChatRequest, current_user: dict = Depends(get_current_user)):
     """流式聊天接口（SSE）"""
     user_id = current_user['user_id']
-    session_key = get_or_create_session_key(user_id)
+    session_key = get_or_create_session_key(user_id, request.sidebar)
     
     messages = []
     if request.system_prompt:

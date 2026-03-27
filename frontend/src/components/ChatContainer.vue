@@ -474,7 +474,8 @@ async function sendMessage() {
     await api.post('/api/chat/stream', {
       message: userMessage,
       image_base64: imageToSend,
-      system_prompt: props.systemPrompt
+      system_prompt: props.systemPrompt,
+      sidebar: props.sidebar
     }, {
       responseType: 'text',
       onDownloadProgress: (progressEvent) => {
