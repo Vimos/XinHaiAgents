@@ -1,7 +1,26 @@
 // api/chat.js - 使用 Pinia store 进行认证
+import axios from 'axios';
 import { useChatStore } from '@/stores/chat';
 
 const OPENCLAW_API_URL = 'https://chat.xinhai.co';
+
+// 创建 axios 实例供 ChatContainer.vue 使用
+const api = axios.create({
+  baseURL: OPENCLAW_API_URL,
+  timeout: 300000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// 请求拦截器：自动添加认证头
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 /**
  * 发送消息（非流式）
@@ -59,6 +78,4 @@ export class XinHaiChatAPI {
 }
 
 export const chatApi = new XinHaiChatAPI();
-
-// eslint-disable-next-line no-unused-vars
-export { OPENCLAW_API_URL };
+export { api, OPENCLAW_API_URL };
