@@ -2,11 +2,12 @@
 import axios from 'axios';
 import { useChatStore } from '@/stores/chat';
 
-const OPENCLAW_API_URL = 'https://chat.xinhai.co';
+// 认证服务地址（不是直接调用 XinHai 智能体）
+const AUTH_API_URL = 'https://chat.xinhai.co';
 
 // 创建 axios 实例供 ChatContainer.vue 使用
 const api = axios.create({
-  baseURL: OPENCLAW_API_URL,
+  baseURL: AUTH_API_URL,
   timeout: 300000,
   headers: {
     'Content-Type': 'application/json'
@@ -78,4 +79,4 @@ export class XinHaiChatAPI {
 }
 
 export const chatApi = new XinHaiChatAPI();
-export { api, OPENCLAW_API_URL };
+export { api, AUTH_API_URL };

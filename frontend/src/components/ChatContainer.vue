@@ -468,13 +468,11 @@ async function sendMessage() {
     
     let content = '';
     
-    await api.post('/v1/chat/completions', {
-      model: 'openclaw:main',
-      messages: apiMessages,
-      temperature: 0.7,
-      max_tokens: 2000,
-      stream: true,
-      user: sessionId.value  // 使用前端 sessionId 作为后端 sessionKey
+    // 使用后端认证服务的 /api/chat/stream 端点
+    await api.post('/api/chat/stream', {
+      message: userMessage,
+      image_base64: imageToSend,
+      system_prompt: props.systemPrompt
     }, {
       responseType: 'text',
       onDownloadProgress: (progressEvent) => {
@@ -517,6 +515,27 @@ async function sendMessage() {
               }
               
               // 处理普通内容
+              if (delta?.content) {
+                content += delta.content;
+                
+                const lastMessage = messages.value[messages.value.length - 1];
+                if (lastMessage.role === 'assistant') {
+                  lastMessage.content = content;
+                } else {
+                  messages.value.push({
+                    role: 'assistant',
+                    content: content,
+                    timestamp: Date.now()
+                  });
+                }
+              }
+            } catch (e) {
+              // Ignore parse errors for incomplete JSON chunks
+            }
+          }
+        }
+      }
+    });
               if (delta?.content) {
                 content += delta.content;
                 
