@@ -536,27 +536,6 @@ async function sendMessage() {
         }
       }
     });
-              if (delta?.content) {
-                content += delta.content;
-                
-                const lastMessage = messages.value[messages.value.length - 1];
-                if (lastMessage.role === 'assistant') {
-                  lastMessage.content = content;
-                } else {
-                  messages.value.push({
-                    role: 'assistant',
-                    content: content,
-                    timestamp: Date.now()
-                  });
-                }
-              }
-            } catch (e) {
-              // Ignore parse errors for incomplete JSON chunks
-            }
-          }
-        }
-      }
-    });
     
   } catch (error) {
     console.error('Send message error:', error);
