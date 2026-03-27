@@ -26,7 +26,8 @@ module.exports = defineConfig({
             env['process.env'] = {
                 ...(env['process.env'] || {}),
                 VUE_APP_OPENCLAW_TOKEN: JSON.stringify(process.env.VUE_APP_OPENCLAW_TOKEN || ''),
-                VITE_OPENCLAW_TOKEN: JSON.stringify(process.env.VITE_OPENCLAW_TOKEN || '')
+                VITE_OPENCLAW_TOKEN: JSON.stringify(process.env.VITE_OPENCLAW_TOKEN || ''),
+                VUE_APP_OPENCLAW_API_URL: JSON.stringify(process.env.VUE_APP_OPENCLAW_API_URL || '/openclaw')
             }
             return [env]
         })
