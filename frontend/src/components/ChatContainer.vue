@@ -278,7 +278,7 @@ const showHistory = ref(false);
 const sessions = ref([]);
 
 // API 配置
-const API_URL = '/openclaw';
+const API_URL = import.meta.env.VITE_OPENCLAW_API_URL || '/openclaw';
 const API_TOKEN = process.env.VUE_APP_OPENCLAW_TOKEN 
   || process.env.VITE_OPENCLAW_TOKEN 
   || '';
