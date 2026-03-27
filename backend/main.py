@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 # ============ 配置 ============
 SECRET_KEY = "change-this-in-production"
 DB_PATH = "xinhai_auth.db"
-XINHAI_AGENT_URL = "http://localhost:18789"  # XinHai 智能体服务地址
+XINHAI_AGENT_URL = "https://chat.xinhai.co"  # XinHai 智能体服务地址
 
 # ============ 数据库初始化 ============
 def init_db():

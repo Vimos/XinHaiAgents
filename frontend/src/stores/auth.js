@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useChatStore } from './chat';
 
-const API_URL = 'https://api.xinhai.co';  // \u8ba4\u8bc1\u670d\u52a1\u5730\u5740
+const API_URL = 'https://chat.xinhai.co';  // \u8ba4\u8bc1\u670d\u52a1\u5730\u5740
 
 export const useAuthStore = defineStore('auth', () => {
   // ============ State ============

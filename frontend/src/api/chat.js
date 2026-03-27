@@ -2,7 +2,8 @@
 import { useAuthStore } from '@/stores/auth';
 import { useChatStore } from '@/stores/chat';
 
-const API_URL = 'https://api.xinhai.co';
+const API_URL = 'https://chat.xinhai.co';
+const OPENCLAW_API_URL = 'https://chat.xinhai.co';
 
 /**
  * \u53d1\u9001\u6d88\u606f\uff08\u975e\u6d41\u5f0f\uff09
