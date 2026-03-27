@@ -209,6 +209,7 @@
 import { ref, computed, nextTick, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '@/api/chat.js';
+import { marked } from 'marked';
 import XhAvatar from '@/components/ui/XhAvatar.vue';
 import XhButton from '@/components/ui/XhButton.vue';
 import { 
@@ -577,11 +578,23 @@ function clearChat() {
   }
 }
 
+// 配置 marked
+marked.setOptions({
+  breaks: true,       // 换行符转为 <br>
+  gfm: true,          // 支持 GitHub 风格 Markdown
+});
+
 function formatContent(content) {
-  return content
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/\n/g, '<br>');
+  if (!content) return '';
+  try {
+    return marked.parse(content);
+  } catch (e) {
+    // 降级为简单格式化
+    return content
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br>');
+  }
 }
 
 function formatTime(timestamp) {
@@ -897,6 +910,102 @@ function formatDate(timestamp) {
   color: var(--text-primary);
   line-height: 1.6;
   word-wrap: break-word;
+}
+
+/* Markdown 渲染样式 */
+.message__text :deep(h1),
+.message__text :deep(h2),
+.message__text :deep(h3) {
+  margin: 8px 0 4px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.message__text :deep(h1) { font-size: 1.3em; }
+.message__text :deep(h2) { font-size: 1.15em; }
+.message__text :deep(h3) { font-size: 1.05em; }
+
+.message__text :deep(p) {
+  margin: 4px 0;
+}
+
+.message__text :deep(ul),
+.message__text :deep(ol) {
+  margin: 4px 0;
+  padding-left: 20px;
+}
+
+.message__text :deep(li) {
+  margin: 2px 0;
+}
+
+.message__text :deep(code) {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.9em;
+  color: #e06c75;
+}
+
+.message__text :deep(pre) {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 12px 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.message__text :deep(pre code) {
+  background: none;
+  padding: 0;
+  color: #abb2bf;
+  font-size: 0.85em;
+  line-height: 1.5;
+}
+
+.message__text :deep(blockquote) {
+  border-left: 3px solid rgba(0, 212, 255, 0.5);
+  margin: 8px 0;
+  padding: 4px 12px;
+  color: var(--text-secondary);
+  background: rgba(0, 212, 255, 0.05);
+  border-radius: 0 4px 4px 0;
+}
+
+.message__text :deep(a) {
+  color: var(--accent-primary, #00d4ff);
+  text-decoration: none;
+}
+
+.message__text :deep(a:hover) {
+  text-decoration: underline;
+}
+
+.message__text :deep(table) {
+  border-collapse: collapse;
+  margin: 8px 0;
+  width: 100%;
+}
+
+.message__text :deep(th),
+.message__text :deep(td) {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 6px 10px;
+  text-align: left;
+  font-size: 0.9em;
+}
+
+.message__text :deep(th) {
+  background: rgba(0, 0, 0, 0.2);
+  font-weight: 600;
+}
+
+.message__text :deep(hr) {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 12px 0;
 }
 
 .message__time {
