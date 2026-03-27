@@ -342,7 +342,7 @@ async def chat(request: ChatRequest, current_user: dict = Depends(get_current_us
     async with httpx.AsyncClient(timeout=300.0) as client:
         try:
             response = await client.post(
-                f"{XINHAI_AGENT_URL}/openclaw/v1/chat/completions",
+                f"{XINHAI_AGENT_URL}/v1/chat/completions",
                 json={
                     "model": "openclaw:main",
                     "messages": messages,
@@ -384,7 +384,7 @@ async def chat_stream(request: ChatRequest, current_user: dict = Depends(get_cur
         async with httpx.AsyncClient(timeout=300.0) as client:
             async with client.stream(
                 "POST",
-                f"{XINHAI_AGENT_URL}/openclaw/v1/chat/completions",
+                f"{XINHAI_AGENT_URL}/v1/chat/completions",
                 json={
                     "model": "openclaw:main",
                     "messages": messages,
