@@ -9,7 +9,14 @@ import sqlite3
 import httpx
 import json
 import uuid
+import sys
+import os
+import tempfile
+import asyncio
 from datetime import datetime, timedelta
+
+# 添加 xinhai 包路径
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 # ============ 配置 ============
 SECRET_KEY = "change-this-in-production"
@@ -390,6 +397,147 @@ async def chat_stream(request: ChatRequest, current_user: dict = Depends(get_cur
 @app.get("/api/health")
 def health_check():
     return {"status": "ok"}
+
+# ============ Simulation API ============
+
+# 用户模拟实例管理（内存中）
+user_simulations = {}
+
+class SimulationCreateRequest(BaseModel):
+    config_yaml: str  # YAML 配置内容
+
+class SimulationNextRequest(BaseModel):
+    input_messages: list = []  # 用户输入（proxy agent 场景）
+
+@app.post("/api/simulation/create")
+def create_simulation(
+    request: SimulationCreateRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """上传 YAML 配置，创建模拟实例"""
+    user_id = current_user['user_id']
+    
+    try:
+        from xinhai.arena.simulation import Simulation
+    except ImportError as e:
+        raise HTTPException(500, f"xinhai arena not available: {e}")
+    
+    # 写入临时文件
+    tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False)
+    tmp.write(request.config_yaml)
+    tmp.close()
+    
+    try:
+        env_id = f"sim_user_{user_id}_{uuid.uuid4().hex[:8]}"
+        sim = Simulation.from_config(tmp.name, environment_id=env_id)
+        sim.reset()
+        user_simulations[user_id] = sim
+        
+        # 返回 agent 列表供前端渲染
+        agents_info = []
+        for agent in sim.agents:
+            agents_info.append({
+                "id": agent.agent_id,
+                "name": agent.name,
+                "role": agent.role_description,
+                "type": str(agent.agent_type),
+            })
+        
+        # 提取拓扑信息
+        topologies_info = []
+        for topo in sim.environment.topologies:
+            edges = list(topo.digraph.edges())
+            topologies_info.append({
+                "name": topo.name,
+                "maxTurns": topo.max_turns,
+                "edges": [{"from": e[0], "to": e[1]} for e in edges]
+            })
+        
+        return {
+            "status": "created",
+            "environmentId": env_id,
+            "agents": agents_info,
+            "topologies": topologies_info
+        }
+    except Exception as e:
+        raise HTTPException(400, f"Failed to create simulation: {e}")
+    finally:
+        os.unlink(tmp.name)
+
+@app.post("/api/simulation/next")
+async def simulation_next(
+    request: SimulationNextRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """执行一步模拟，返回 agent 发言"""
+    user_id = current_user['user_id']
+    sim = user_simulations.get(user_id)
+    
+    if not sim:
+        raise HTTPException(404, "No active simulation. Create one first.")
+    
+    if sim.environment.is_done():
+        return {"status": "done", "message": "模拟已结束"}
+    
+    try:
+        # 在线程池中执行（避免阻塞事件循环）
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            lambda: sim.next(input_messages=request.input_messages)
+        )
+        
+        if result:
+            return {
+                "status": "ok",
+                "message": {
+                    "senderId": result.senderId,
+                    "username": result.username,
+                    "content": result.content,
+                    "receiverIds": result.receiverIds,
+                    "timestamp": result.timestamp,
+                    "date": getattr(result, 'date', ''),
+                }
+            }
+        
+        return {"status": "done", "message": "模拟已结束"}
+    except Exception as e:
+        raise HTTPException(500, f"Simulation step failed: {e}")
+
+@app.post("/api/simulation/reset")
+def reset_simulation(current_user: dict = Depends(get_current_user)):
+    """重置模拟"""
+    user_id = current_user['user_id']
+    sim = user_simulations.get(user_id)
+    
+    if not sim:
+        raise HTTPException(404, "No active simulation")
+    
+    sim.reset()
+    return {"status": "reset"}
+
+@app.get("/api/simulation/status")
+def simulation_status(current_user: dict = Depends(get_current_user)):
+    """获取当前模拟状态"""
+    user_id = current_user['user_id']
+    sim = user_simulations.get(user_id)
+    
+    if not sim:
+        return {"status": "none"}
+    
+    return {
+        "status": "active" if not sim.environment.is_done() else "done",
+        "agents": [
+            {
+                "id": a.agent_id,
+                "name": a.name,
+                "role": a.role_description,
+                "type": str(a.agent_type),
+                "messageCount": len(a.memory.short_term_memory.messages) if hasattr(a.memory, 'short_term_memory') else 0
+            }
+            for a in sim.agents
+        ]
+    }
 
 if __name__ == "__main__":
     import uvicorn
