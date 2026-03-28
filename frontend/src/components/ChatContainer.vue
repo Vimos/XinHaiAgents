@@ -332,15 +332,54 @@ const deleteSession = (id) => {
   }
 };
 
-// Initialize
-onMounted(() => {
+// Initialize - 优先从后端加载
+onMounted(async () => {
   loadSessionsList();
   
-  // Check for session in URL
+  const token = localStorage.getItem('token');
+  
+  // 尝试从后端加载会话列表
+  if (token) {
+    try {
+      const res = await fetch('https://chat.xinhai.co/api/chat/history', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        
+        // 找到当前 sidebar 的会话
+        const sidebarSession = data.sessions.find(s => 
+          s.sessionKey && s.sessionKey.includes(props.sidebar)
+        ) || data.sessions[0];
+        
+        if (sidebarSession) {
+          // 加载该会话的详细内容
+          const detailRes = await fetch(
+            `https://chat.xinhai.co/api/chat/history/${sidebarSession.sessionKey}`,
+            { headers: { 'Authorization': `Bearer ${token}` } }
+          );
+          
+          if (detailRes.ok) {
+            const detail = await detailRes.json();
+            sessionId.value = detail.sessionKey;
+            messages.value = detail.messages || [];
+            
+            // 同时保存到 localStorage 做缓存
+            saveChatHistory(sessionId.value, props.sidebar, messages.value);
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load from backend:', e);
+    }
+  }
+  
+  // 后端加载失败，回退到 localStorage
   const urlSessionId = route.query.session;
   if (urlSessionId) {
     const history = loadChatHistory(urlSessionId);
-    // Only load if it belongs to current sidebar
     if (history && history.sidebar === props.sidebar) {
       sessionId.value = urlSessionId;
       messages.value = history.messages || [];
@@ -348,7 +387,6 @@ onMounted(() => {
     }
   }
   
-  // Try to load most recent session for this sidebar
   const recentSessionId = getMostRecentSession(props.sidebar);
   if (recentSessionId) {
     const history = loadChatHistory(recentSessionId);
@@ -359,18 +397,41 @@ onMounted(() => {
     }
   }
   
-  // Create new session for this sidebar
+  // 创建新会话
   createNewSession();
 });
 
-// Watch messages and save to storage
-watch(messages, () => {
+// Watch messages and save to storage + backend
+watch(messages, async () => {
   scrollToBottom();
   
-  // Auto save (debounced)
+  // Auto save to localStorage
   if (sessionId.value) {
     saveChatHistory(sessionId.value, props.sidebar, messages.value);
     loadSessionsList();
+  }
+  
+  // Sync to backend API
+  if (sessionId.value && messages.value.length > 0) {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        await fetch('https://chat.xinhai.co/api/chat/history', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            session_key: sessionId.value,
+            title: props.title,
+            messages: messages.value
+          })
+        });
+      }
+    } catch (e) {
+      console.error('Backend save failed:', e);
+    }
   }
 }, { deep: true });
 
