@@ -444,6 +444,32 @@ function scrollToBottom() {
   });
 }
 
+// 保存对话到后端
+function saveToBackend() {
+  if (!sessionId.value || messages.value.length === 0) return;
+  const token = localStorage.getItem('token');
+  if (!token) return;
+  
+  console.log('[ChatContainer] Saving to backend, messages:', messages.value.length);
+  
+  fetch('https://chat.xinhai.co/api/chat/history', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      session_key: sessionId.value,
+      title: props.title,
+      messages: messages.value
+    })
+  }).then(res => {
+    console.log('[ChatContainer] Backend save response:', res.status);
+  }).catch(e => {
+    console.error('[ChatContainer] Backend save failed:', e);
+  });
+}
+
 function autoResize(e) {
   const textarea = e.target;
   textarea.style.height = 'auto';
@@ -626,6 +652,8 @@ async function sendMessage() {
     });
   } finally {
     isLoading.value = false;
+    // 直接保存到后端
+    saveToBackend();
   }
 }
 
