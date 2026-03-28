@@ -481,15 +481,6 @@ function formatMarkdown(content) {
     return content.replace(/\n/g, '<br>');
   }
 }
-
-function formatTime(timestamp) {
-  if (!timestamp) return '';
-  return new Date(timestamp).toLocaleTimeString('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
-}
 </script>
 
 <style scoped>
