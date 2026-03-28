@@ -46,6 +46,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER REFERENCES users(id),
             session_key TEXT NOT NULL,
+            sidebar TEXT DEFAULT 'chat',
             title TEXT,
             messages JSON NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -53,6 +54,12 @@ def init_db():
             is_active BOOLEAN DEFAULT 1
         )
     """)
+    
+    # 尝试添加 sidebar 列（已有表的情况）
+    try:
+        cursor.execute("ALTER TABLE chat_histories ADD COLUMN sidebar TEXT DEFAULT 'chat'")
+    except:
+        pass
     
     # 索引
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_user ON chat_histories(user_id)")
@@ -94,6 +101,7 @@ class ChatRequest(BaseModel):
 
 class SaveChatRequest(BaseModel):
     session_key: str
+    sidebar: str = "chat"
     title: str | None = None
     messages: list
 
@@ -193,25 +201,35 @@ def get_me(current_user: dict = Depends(get_current_user)):
 # ============ 对话历史 API ============
 
 @app.get("/api/chat/history")
-def get_chat_history(current_user: dict = Depends(get_current_user)):
-    """获取用户的所有对话历史"""
+def get_chat_history(sidebar: str = None, current_user: dict = Depends(get_current_user)):
+    """获取用户的对话历史，可按 sidebar 过滤"""
     conn = get_db()
     cursor = conn.cursor()
     
-    cursor.execute("""
-        SELECT id, session_key, title, created_at, updated_at,
-               json_array_length(messages) as message_count
-        FROM chat_histories 
-        WHERE user_id = ? AND is_active = 1
-        ORDER BY updated_at DESC
-    """, (current_user['user_id'],))
+    if sidebar:
+        cursor.execute("""
+            SELECT id, session_key, sidebar, title, created_at, updated_at,
+                   json_array_length(messages) as message_count
+            FROM chat_histories 
+            WHERE user_id = ? AND is_active = 1 AND sidebar = ?
+            ORDER BY updated_at DESC
+        """, (current_user['user_id'], sidebar))
+    else:
+        cursor.execute("""
+            SELECT id, session_key, sidebar, title, created_at, updated_at,
+                   json_array_length(messages) as message_count
+            FROM chat_histories 
+            WHERE user_id = ? AND is_active = 1
+            ORDER BY updated_at DESC
+        """, (current_user['user_id'],))
     
     sessions = []
     for row in cursor.fetchall():
         sessions.append({
             "id": row['id'],
             "sessionKey": row['session_key'],
-            "title": row['title'] or f"\u5bf9\u8bdd {row['created_at'][:10]}",
+            "sidebar": row['sidebar'] if 'sidebar' in row.keys() else 'chat',
+            "title": row['title'] or f"对话 {row['created_at'][:10]}",
             "createdAt": row['created_at'],
             "updatedAt": row['updated_at'],
             "messageCount": row['message_count']
@@ -260,15 +278,15 @@ def save_chat_history(request: SaveChatRequest, current_user: dict = Depends(get
     if existing:
         cursor.execute("""
             UPDATE chat_histories 
-            SET messages = ?, updated_at = ?, title = COALESCE(?, title)
+            SET messages = ?, updated_at = ?, title = COALESCE(?, title), sidebar = COALESCE(?, sidebar)
             WHERE id = ?
-        """, (json.dumps(request.messages), datetime.now(), request.title, existing['id']))
+        """, (json.dumps(request.messages), datetime.now(), request.title, request.sidebar, existing['id']))
     else:
         cursor.execute("""
-            INSERT INTO chat_histories (user_id, session_key, title, messages)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO chat_histories (user_id, session_key, sidebar, title, messages)
+            VALUES (?, ?, ?, ?, ?)
         """, (current_user['user_id'], request.session_key, 
-              request.title or "\u65b0\u5bf9\u8bdd", json.dumps(request.messages)))
+              request.sidebar, request.title or "新对话", json.dumps(request.messages)))
     
     conn.commit()
     conn.close()

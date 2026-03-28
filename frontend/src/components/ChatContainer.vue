@@ -341,7 +341,7 @@ onMounted(async () => {
   // 尝试从后端加载会话列表
   if (token) {
     try {
-      const res = await fetch('https://chat.xinhai.co/api/chat/history', {
+      const res = await fetch(`https://chat.xinhai.co/api/chat/history?sidebar=${props.sidebar}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -424,6 +424,7 @@ watch(messages, async () => {
           },
           body: JSON.stringify({
             session_key: sessionId.value,
+            sidebar: props.sidebar,
             title: props.title,
             messages: messages.value
           })
@@ -450,7 +451,7 @@ function saveToBackend() {
   const token = localStorage.getItem('token');
   if (!token) return;
   
-  console.log('[ChatContainer] Saving to backend, messages:', messages.value.length);
+  console.log('[ChatContainer] Saving to backend, sidebar:', props.sidebar, 'messages:', messages.value.length);
   
   fetch('https://chat.xinhai.co/api/chat/history', {
     method: 'POST',
@@ -460,6 +461,7 @@ function saveToBackend() {
     },
     body: JSON.stringify({
       session_key: sessionId.value,
+      sidebar: props.sidebar,
       title: props.title,
       messages: messages.value
     })
