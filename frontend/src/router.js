@@ -2,25 +2,26 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 import DashboardView from "@/views/DashboardView.vue"
-import ChatView from "@/views/ChatView.vue"
+import NewChatView from "@/views/NewChatView.vue"           // 新架构
+import NewCBTView from "@/views/NewCBTView.vue"             // 新架构
+import NewEmpathyView from "@/views/NewEmpathyView.vue"     // 新架构
 import RAGChat from "@/views/RAGChat.vue"
 import MultiAgentView from "@/views/MultiAgentView.vue"
-import CBTView from "@/views/CBTView.vue"
 import SuicideRiskView from "@/views/SuicideRiskView.vue"
-import EmpathyView from "@/views/EmpathyView.vue"
 import CPsyCounView from "@/views/CPsyCounView.vue"
 import LoginView from "@/views/LoginView.vue"
 
 const routes = [
     { path: '/login', component: LoginView, name: 'Login', meta: { public: true } },
     { path: '/', component: DashboardView, name: 'Dashboard', meta: { requiresAuth: true } },
-    { path: '/chat', component: ChatView, name: 'Chat', meta: { requiresAuth: true } },
-    { path: '/cbt', component: CBTView, name: 'CBT', meta: { requiresAuth: true } },
+    { path: '/chat', component: NewChatView, name: 'Chat', meta: { requiresAuth: true } },      // 新架构
+    { path: '/cbt', component: NewCBTView, name: 'CBT', meta: { requiresAuth: true } },         // 新架构
+    { path: '/empathy', component: NewEmpathyView, name: 'Empathy', meta: { requiresAuth: true } }, // 新架构
     { path: '/suicide-risk', component: SuicideRiskView, name: 'SuicideRisk', meta: { requiresAuth: true } },
-    { path: '/empathy', component: EmpathyView, name: 'Empathy', meta: { requiresAuth: true } },
     { path: '/cpsycoun', component: CPsyCounView, name: 'CPsyCoun', meta: { requiresAuth: true } },
     { path: '/simulation', component: MultiAgentView, name: 'Simulation', meta: { requiresAuth: true } },
     { path: '/ragchat', component: RAGChat, name: 'RAGChat', meta: { requiresAuth: true } },
+]
 ]
 
 const router = createRouter({
