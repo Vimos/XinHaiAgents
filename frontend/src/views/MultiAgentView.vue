@@ -22,6 +22,9 @@
           <div class="example-configs">
             <p class="example-title">或选择示例配置：</p>
             <div class="example-list">
+              <button class="example-btn" @click="loadExample('simple')">
+                🚀 简单示例
+              </button>
               <button class="example-btn" @click="loadExample('cbt')">
                 🧠 CBT 心理咨询
               </button>
@@ -211,7 +214,65 @@ async function loadExample(name) {
 }
 
 function getBuiltinExample(name) {
-  // 内置 CBT 示例配置
+  // 简化示例 - 只需要2个agent，不依赖外部controller
+  if (name === 'simple') {
+    return `arena:
+  allowed_routing_types: &allowed_routing_types
+    - "[Unicast]"
+  prompts:
+    routing_prompt: &routing_prompt |-
+      你是{agent_name}。{role_description}
+      历史摘要：{chat_summary}
+      最新对话：{chat_history}
+      可交互智能体：{agent_descriptions}
+      选择通讯目标和方式，回复JSON格式：{"method": "[Unicast]", "target": [1]}
+    summary_prompt: &summary_prompt |-
+      根据历史摘要和最新对话，给出新的摘要。
+      【历史摘要】{chat_summary}
+      【最新对话】{chat_history}
+      新摘要：
+    prompt: &prompt |-
+      【角色】{role_description}
+      【摘要】{chat_summary}
+      【历史】{chat_history}
+      你以{routing_type}方式与{target_agent_names}通信，内容：
+  name: Simple Demo
+  environment:
+    environment_type: agency
+    environment_id: simple_demo
+    controller_address: http://localhost:5000
+    topologies:
+      - type: agency
+        name: simple
+        start: 0
+        max_turns: 5
+        edges:
+          - 0->1
+          - 1->0
+  agents:
+    - agent_type: proxy
+      agent_id: 0
+      name: 用户
+      role_description: 用户，提出问题和需求
+      routing_prompt_template: *routing_prompt
+      summary_prompt_template: *summary_prompt
+      prompt_template: *prompt
+      locale: zh
+      allowed_routing_types: *allowed_routing_types
+      llm: gpt-4o
+    - agent_type: simple
+      agent_id: 1
+      name: 助手
+      role_description: AI助手，回答用户问题
+      routing_prompt_template: *routing_prompt
+      summary_prompt_template: *summary_prompt
+      prompt_template: *prompt
+      locale: zh
+      allowed_routing_types: *allowed_routing_types
+      llm: gpt-4o`;
+  }
+  
+  // 完整 CBT 示例（需要 controller 服务）
   if (name === 'cbt') {
     return `arena:
   allowed_routing_types: &allowed_routing_types
@@ -295,8 +356,15 @@ async function createSimulation(configYaml) {
     });
     
     if (!res.ok) {
-      const err = await res.json();
-      alert('创建模拟失败: ' + (err.detail || '未知错误'));
+      let errorMsg = '未知错误';
+      try {
+        const err = await res.json();
+        errorMsg = err.detail || JSON.stringify(err);
+      } catch (e) {
+        errorMsg = `HTTP ${res.status}: ${res.statusText}`;
+      }
+      alert('创建模拟失败: ' + errorMsg);
+      console.error('Simulation create failed:', res.status, errorMsg);
       return;
     }
     
