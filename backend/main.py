@@ -94,10 +94,12 @@ class UserLogin(BaseModel):
     password: str
 
 class ChatRequest(BaseModel):
-    message: str
+    message: str | None = None  # 旧版兼容
+    messages: list | None = None  # 新版支持数组
     image_base64: str | None = None
     system_prompt: str = ""
-    sidebar: str = "chat"  # 边栏标识，用于区分不同场景的会话
+    sidebar: str = "chat"
+    session_key: str | None = None
 
 class SaveChatRequest(BaseModel):
     session_key: str
@@ -370,22 +372,30 @@ async def chat(request: ChatRequest, current_user: dict = Depends(get_current_us
 async def chat_stream(request: ChatRequest, current_user: dict = Depends(get_current_user)):
     """流式聊天接口（SSE）"""
     user_id = current_user['user_id']
-    session_key = get_or_create_session_key(user_id, request.sidebar)
+    session_key = request.session_key or get_or_create_session_key(user_id, request.sidebar)
     
-    messages = []
-    if request.system_prompt:
-        messages.append({"role": "system", "content": request.system_prompt})
-    
-    if request.image_base64 and request.image_base64.startswith("data:image"):
-        messages.append({
-            "role": "user",
-            "content": [
-                {"type": "text", "text": request.message},
-                {"type": "image_url", "image_url": {"url": request.image_base64}}
-            ]
-        })
+    # 支持两种消息格式
+    if request.messages:
+        # 新版：直接使用 messages 数组
+        messages = request.messages
+        if request.system_prompt:
+            messages = [{"role": "system", "content": request.system_prompt}] + messages
     else:
-        messages.append({"role": "user", "content": request.message})
+        # 旧版：从 message 构建
+        messages = []
+        if request.system_prompt:
+            messages.append({"role": "system", "content": request.system_prompt})
+        
+        if request.image_base64 and request.image_base64.startswith("data:image"):
+            messages.append({
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": request.message},
+                    {"type": "image_url", "image_url": {"url": request.image_base64}}
+                ]
+            })
+        else:
+            messages.append({"role": "user", "content": request.message or ""})
     
     async def generate():
         async with httpx.AsyncClient(timeout=300.0) as client:
