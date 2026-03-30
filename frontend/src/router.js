@@ -22,7 +22,6 @@ const routes = [
     { path: '/simulation', component: MultiAgentView, name: 'Simulation', meta: { requiresAuth: true } },
     { path: '/ragchat', component: RAGChat, name: 'RAGChat', meta: { requiresAuth: true } },
 ]
-]
 
 const router = createRouter({
     history: createMemoryHistory(),
