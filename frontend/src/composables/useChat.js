@@ -134,8 +134,8 @@ export function useChat(sidebar, title = '新对话') {
         })),
         sidebar,
         sessionKey: sessionKey.value,
-        onChunk: (fullContent, _delta) => {
-          // 实时更新 AI 消息 (fullContent 包含完整内容)
+        onChunk: (fullContent) => {
+          // 实时更新 AI 消息
           messages.value[aiMessageIndex].content = fullContent;
         },
         onError: (err) => {
