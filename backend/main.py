@@ -437,18 +437,29 @@ def create_simulation(
     
     try:
         from xinhai.arena.simulation import Simulation
+        print(f"[Simulation] Imported Simulation class successfully")
     except ImportError as e:
+        print(f"[Simulation] Import error: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(500, f"xinhai arena not available: {e}")
     
     # 写入临时文件
     tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False)
     tmp.write(request.config_yaml)
     tmp.close()
+    print(f"[Simulation] Config written to {tmp.name}")
     
     try:
         env_id = f"sim_user_{user_id}_{uuid.uuid4().hex[:8]}"
+        print(f"[Simulation] Creating simulation with env_id: {env_id}")
+        
         sim = Simulation.from_config(tmp.name, environment_id=env_id)
+        print(f"[Simulation] Simulation created, agents: {len(sim.agents)}")
+        
         sim.reset()
+        print(f"[Simulation] Simulation reset completed")
+        
         user_simulations[user_id] = sim
         
         # 返回 agent 列表供前端渲染
@@ -478,6 +489,9 @@ def create_simulation(
             "topologies": topologies_info
         }
     except Exception as e:
+        print(f"[Simulation] Error creating simulation: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(400, f"Failed to create simulation: {e}")
     finally:
         os.unlink(tmp.name)
