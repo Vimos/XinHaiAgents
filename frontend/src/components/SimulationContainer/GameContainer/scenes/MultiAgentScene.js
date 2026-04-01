@@ -29,8 +29,8 @@ export class MultiAgentScene extends Phaser.Scene {
         // 创建房间布局
         this.createRoomLayout();
         
-        // 创建示例 Agent
-        this.createAgents();
+        // Agent 将在配置加载后动态创建
+        // this.createAgents(); // 移到 setAgentsConfig
         
         // 创建 UI 层
         this.createUI();
@@ -38,15 +38,90 @@ export class MultiAgentScene extends Phaser.Scene {
         // 监听来自 Vue 的事件
         this.setupEventListeners();
         
-        // 模拟对话流
-        this.startSimulation();
-        
-        console.log('[MultiAgentScene] Scene created successfully');
-        
         // 通知场景已准备好
         if (this.game && this.game.events) {
             this.game.events.emit('current-scene-ready', this);
         }
+        
+        console.log('[MultiAgentScene] Scene created successfully');
+    }
+
+    setAgentsConfig(agentsConfig) {
+        """根据配置动态创建 Agent"""
+        console.log('[MultiAgentScene] Creating agents from config:', agentsConfig);
+        
+        // 清除现有 agent
+        this.agents.forEach(agent => agent.container.destroy());
+        this.agents.clear();
+        
+        if (!agentsConfig || agentsConfig.length === 0) {
+            // 默认创建示例 agent
+            this.createDefaultAgents();
+            return;
+        }
+        
+        // 根据配置创建 agent，自动布局
+        const positions = this.calculateAgentPositions(agentsConfig.length);
+        
+        agentsConfig.forEach((agent, index) => {
+            const pos = positions[index] || positions[0];
+            const roleEmoji = this.getRoleEmoji(agent.role || '', agent.name);
+            
+            this.createAgent({
+                id: String(agent.id),
+                name: agent.name,
+                role: agent.role || 'Agent',
+                avatar: roleEmoji,
+                x: pos.x,
+                y: pos.y,
+                color: this.getAgentColor(index)
+            });
+        });
+    }
+    
+    calculateAgentPositions(count) {
+        """计算 agent 位置，自动布局"""
+        const positions = [];
+        const centerX = 512;
+        const centerY = 384;
+        const radius = 200;
+        
+        if (count === 1) {
+            positions.push({ x: centerX, y: centerY });
+        } else if (count === 2) {
+            positions.push({ x: centerX - 150, y: centerY });
+            positions.push({ x: centerX + 150, y: centerY });
+        } else if (count === 3) {
+            positions.push({ x: centerX, y: centerY - 100 });
+            positions.push({ x: centerX - 150, y: centerY + 100 });
+            positions.push({ x: centerX + 150, y: centerY + 100 });
+        } else {
+            // 圆形布局
+            for (let i = 0; i < count; i++) {
+                const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
+                positions.push({
+                    x: centerX + Math.cos(angle) * radius,
+                    y: centerY + Math.sin(angle) * radius
+                });
+            }
+        }
+        return positions;
+    }
+    
+    getRoleEmoji(role, name) {
+        """根据角色返回 emoji"""
+        const lowerRole = (role + name).toLowerCase();
+        if (lowerRole.includes('用户') || lowerRole.includes('来访') || lowerRole.includes('咨询') || lowerRole.includes('patient')) return '😔';
+        if (lowerRole.includes('咨询') || lowerRole.includes('治疗') || lowerRole.includes('therapist') || lowerRole.includes('医生')) return '🧑‍⚕️';
+        if (lowerRole.includes('督导') || lowerRole.includes('supervisor')) return '👁️';
+        if (lowerRole.includes('助手') || lowerRole.includes('assistant')) return '🤖';
+        return '🤖';
+    }
+    
+    getAgentColor(index) {
+        """返回 agent 颜色"""
+        const colors = [0x00D4FF, 0x9F7AEA, 0x38B2AC, 0xF6AD55, 0x68D391, 0xFC8181];
+        return colors[index % colors.length];
     }
 
     setupEventListeners() {

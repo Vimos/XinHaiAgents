@@ -393,6 +393,13 @@ async function createSimulation(configYaml) {
     simulationDone.value = false;
     messages.value = [];
     
+    // 等待 Phaser 场景准备好后传递 agent 配置
+    setTimeout(() => {
+      if (currentScene.value && currentScene.value.setAgentsConfig) {
+        currentScene.value.setAgentsConfig(data.agents);
+      }
+    }, 500);
+    
   } catch (e) {
     alert('创建模拟失败: ' + e.message);
   }
