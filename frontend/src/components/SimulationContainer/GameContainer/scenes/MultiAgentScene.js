@@ -522,14 +522,15 @@ export class MultiAgentScene extends Phaser.Scene {
         
         const { container } = agent;
         
-        // 创建对话气泡
-        const bubbleY = -70;
+        // 创建对话气泡容器
+        const bubbleContainer = this.add.container(0, -80);
+        container.add(bubbleContainer);
         
-        const bubbleBg = this.add.graphics();
-        const padding = 10;
-        const maxWidth = 200;
+        // 计算文字尺寸（先创建临时文字对象测量）
+        const padding = 12;
+        const maxWidth = 250;
+        const minWidth = 60;
         
-        // 计算文字尺寸
         const textObj = this.add.text(0, 0, message, {
             fontSize: '13px',
             fontFamily: 'Noto Sans SC',
@@ -538,30 +539,56 @@ export class MultiAgentScene extends Phaser.Scene {
         });
         const bounds = textObj.getBounds();
         
-        // 绘制气泡背景
-        const bubbleWidth = Math.min(bounds.width + padding * 2, maxWidth);
+        // 计算自适应气泡尺寸
+        const bubbleWidth = Math.max(Math.min(bounds.width + padding * 2, maxWidth), minWidth);
         const bubbleHeight = bounds.height + padding * 2;
         
-        bubbleBg.fillStyle(0xF0F9FF, 0.95);
-        bubbleBg.fillRoundedRect(-bubbleWidth/2, bubbleY - bubbleHeight, bubbleWidth, bubbleHeight, 8);
+        // 绘制气泡背景
+        const bubbleBg = this.add.graphics();
+        bubbleBg.fillStyle(0xF0F9FF, 0.98);
+        bubbleBg.fillRoundedRect(-bubbleWidth/2, -bubbleHeight/2, bubbleWidth, bubbleHeight, 10);
         
-        // 小三角
+        // 气泡边框
+        bubbleBg.lineStyle(1, 0x00D4FF, 0.5);
+        bubbleBg.strokeRoundedRect(-bubbleWidth/2, -bubbleHeight/2, bubbleWidth, bubbleHeight, 10);
+        
+        // 小三角（指向 agent）
+        bubbleBg.fillStyle(0xF0F9FF, 0.98);
         bubbleBg.fillTriangle(
-            -8, bubbleY,
-            8, bubbleY,
-            0, bubbleY + 8
+            -6, bubbleHeight/2,
+            6, bubbleHeight/2,
+            0, bubbleHeight/2 + 8
         );
         
-        container.add(bubbleBg);
+        bubbleContainer.add(bubbleBg);
         
-        // 添加文字
-        textObj.setPosition(-bubbleWidth/2 + padding, bubbleY - bubbleHeight + padding);
-        container.add(textObj);
+        // 添加文字（居中）
+        textObj.setPosition(-bounds.width/2, -bounds.height/2);
+        bubbleContainer.add(textObj);
         
-        // 3秒后消失
-        this.time.delayedCall(3000, () => {
-            bubbleBg.destroy();
-            textObj.destroy();
+        // 淡入动画
+        bubbleContainer.setAlpha(0);
+        bubbleContainer.setScale(0.8);
+        
+        this.tweens.add({
+            targets: bubbleContainer,
+            alpha: 1,
+            scale: 1,
+            duration: 200,
+            ease: 'Back.easeOut'
+        });
+        
+        // 5秒后淡出消失
+        this.time.delayedCall(5000, () => {
+            this.tweens.add({
+                targets: bubbleContainer,
+                alpha: 0,
+                scale: 0.8,
+                duration: 200,
+                onComplete: () => {
+                    bubbleContainer.destroy();
+                }
+            });
         });
     }
 
