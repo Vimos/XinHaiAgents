@@ -35,6 +35,9 @@ export class MultiAgentScene extends Phaser.Scene {
         // 创建 UI 层
         this.createUI();
         
+        // 监听来自 Vue 的事件
+        this.setupEventListeners();
+        
         // 模拟对话流
         this.startSimulation();
         
@@ -44,6 +47,46 @@ export class MultiAgentScene extends Phaser.Scene {
         if (this.game && this.game.events) {
             this.game.events.emit('current-scene-ready', this);
         }
+    }
+
+    setupEventListeners() {
+        // 监听 agent-speech 事件（来自 Vue 组件）
+        this.events.on('agent-speech', (data) => {
+            console.log('[MultiAgentScene] Received agent-speech:', data);
+            
+            // 将 agentId 映射到场景中的 agent
+            const agentId = this.mapAgentId(data.agentId, data.agentName);
+            if (agentId) {
+                this.showMessage(agentId, data.content);
+            }
+        });
+    }
+
+    mapAgentId(agentId, agentName) {
+        // 尝试直接匹配 ID
+        if (this.agents.has(String(agentId))) {
+            return String(agentId);
+        }
+        
+        // 根据名字映射到场景中的 agent
+        const nameToId = {
+            '用户': 'patient',
+            '来访者': 'patient',
+            '咨询者': 'patient',
+            '助手': 'therapist',
+            '咨询师': 'therapist',
+            '治疗师': 'therapist',
+            '督导': 'supervisor',
+            '督导师': 'supervisor'
+        };
+        
+        const mappedId = nameToId[agentName];
+        if (mappedId && this.agents.has(mappedId)) {
+            return mappedId;
+        }
+        
+        // 默认返回第一个 agent
+        return this.agents.keys().next().value;
     }
 
     createBackground() {
