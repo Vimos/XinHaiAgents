@@ -201,15 +201,28 @@ async function loadExample(name) {
   try {
     // 从仓库加载示例配置
     const res = await fetch(`/examples/${name}.yaml`);
-    if (res.ok) {
-      const text = await res.text();
+    // 检查是否真的是 YAML 内容（不是 HTML）
+    const text = await res.text();
+    if (res.ok && text.trim().startsWith('arena:')) {
+      // 确认是 YAML 内容
       await createSimulation(text);
     } else {
-      // 如果静态文件不存在，使用内置示例
-      await createSimulation(getBuiltinExample(name));
+      // 如果静态文件不存在或返回 HTML，使用内置示例
+      const builtinYaml = getBuiltinExample(name);
+      if (builtinYaml) {
+        await createSimulation(builtinYaml);
+      } else {
+        alert('未知示例: ' + name);
+      }
     }
   } catch (e) {
-    await createSimulation(getBuiltinExample(name));
+    // 网络错误，使用内置示例
+    const builtinYaml = getBuiltinExample(name);
+    if (builtinYaml) {
+      await createSimulation(builtinYaml);
+    } else {
+      alert('加载示例失败: ' + e.message);
+    }
   }
 }
 
