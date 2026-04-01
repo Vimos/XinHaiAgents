@@ -246,7 +246,8 @@ class BaseAgent:
                             logger.error(f"Evaluation {evaluate_ans} error.")
                     except Exception as e:
                         logger.error(f"Evaluation {evaluate_ans} error: {e}")
-            # num_retries -= 1
+            num_retries -= 1
+        return None  # 重试耗尽返回 None
 
     def prompt_for_static_routing(self, agent_ids):
         method = XinHaiRoutingType.UNICAST.routing_name if len(
@@ -264,7 +265,7 @@ class BaseAgent:
             "content": prompt + "\n\n" + self.format_prompt,
         }]
 
-        while True:
+        while num_retries > 0:
             logger.debug(messages)
             chat_response = self.chat_completion(self.client, model=self.llm.model, agent_id=self.agent_id,
                                                  messages=messages)
@@ -280,6 +281,11 @@ class BaseAgent:
                             logger.error(f"Evaluation {rr} error.")
                     except Exception as e:
                         logger.error(f"Evaluation {rr} error: {e}")
+            num_retries -= 1
+        
+        # 重试耗尽，返回错误响应
+        logger.error(f"Complete conversation failed after retries")
+        return self.name, "[系统错误：无法获取响应]"
 
     def retrieve_memory(self) -> XinHaiMemory:
         fetch_request = XinHaiFetchMemoryRequest(storage_key=self.storage_key)
