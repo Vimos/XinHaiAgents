@@ -19,6 +19,18 @@
             选择配置文件
           </xh-button>
           
+          <div class="model-selector">
+            <label>选择模型：</label>
+            <select v-model="selectedModel" class="model-select">
+              <option value="gpt-4o">GPT-4o (OpenAI)</option>
+              <option value="gpt-4">GPT-4 (OpenAI)</option>
+              <option value="gpt-3.5-turbo">GPT-3.5 Turbo (OpenAI)</option>
+              <option value="claude-3-opus">Claude 3 Opus (Anthropic)</option>
+              <option value="claude-3-sonnet">Claude 3 Sonnet (Anthropic)</option>
+              <option value="Qwen2.5-72B-Instruct">Qwen2.5-72B (阿里)</option>
+            </select>
+          </div>
+          
           <div class="example-configs">
             <p class="example-title">或选择示例配置：</p>
             <div class="example-list">
@@ -163,6 +175,7 @@ const simulationActive = ref(false);
 const simulationDone = ref(false);
 const isRunning = ref(false);
 const isPaused = ref(false);
+const selectedModel = ref('gpt-4o'); // 默认模型
 
 const agents = ref([]);
 const topologies = ref([]);
@@ -365,7 +378,10 @@ async function createSimulation(configYaml) {
     const res = await fetch(`${API_URL}/api/simulation/create`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ config_yaml: configYaml })
+      body: JSON.stringify({
+        config_yaml: configYaml,
+        model: selectedModel.value  // 传递前端选择的模型
+      })
     });
     
     if (!res.ok) {
@@ -637,6 +653,37 @@ function formatMarkdown(content) {
   margin-top: var(--space-xl);
   padding-top: var(--space-lg);
   border-top: 1px solid var(--border-color);
+}
+
+.model-selector {
+  margin: var(--space-lg) 0;
+  padding: var(--space-md);
+  background: rgba(0, 212, 255, 0.05);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.model-selector label {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.model-select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.model-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
 }
 
 .example-title {

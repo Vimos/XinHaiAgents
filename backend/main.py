@@ -433,6 +433,7 @@ user_simulations = {}
 
 class SimulationCreateRequest(BaseModel):
     config_yaml: str  # YAML 配置内容
+    model: str = "gpt-4o"  # 前端选择的模型
 
 class SimulationNextRequest(BaseModel):
     input_messages: list = []  # 用户输入（proxy agent 场景）
@@ -454,27 +455,37 @@ def create_simulation(
         traceback.print_exc()
         raise HTTPException(500, f"xinhai arena not available: {e}")
     
+    # 解析并修改 YAML，注入前端选择的模型
+    import yaml
+    try:
+        config = yaml.safe_load(request.config_yaml)
+        print(f"[Simulation] Using model: {request.model}")
+        
+        # 修改所有 agent 的 llm 配置
+        if 'arena' in config and 'agents' in config['arena']:
+            for agent in config['arena']['agents']:
+                agent['llm'] = request.model
+                print(f"[Simulation] Set agent {agent.get('name', agent.get('agent_id'))} llm to {request.model}")
+        
+        # 确保 controller_address 指向后端自己
+        if 'arena' in config and 'environment' in config['arena']:
+            config['arena']['environment']['controller_address'] = 'http://localhost:8000'
+        
+        modified_yaml = yaml.dump(config, allow_unicode=True, sort_keys=False)
+    except Exception as e:
+        print(f"[Simulation] YAML modification error: {e}")
+        modified_yaml = request.config_yaml  # 失败时使用原 YAML
+    
     # 写入临时文件
     tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False, encoding='utf-8')
-    tmp.write(request.config_yaml)
+    tmp.write(modified_yaml)
     tmp.flush()
     tmp.close()
     print(f"[Simulation] Config written to {tmp.name}")
-    print(f"[Simulation] Config content preview: {request.config_yaml[:200]}...")
     
     try:
         env_id = f"sim_user_{user_id}_{uuid.uuid4().hex[:8]}"
         print(f"[Simulation] Creating simulation with env_id: {env_id}")
-        
-        # 验证 YAML 格式
-        import yaml
-        with open(tmp.name, 'r', encoding='utf-8') as f:
-            test_config = yaml.safe_load(f)
-        print(f"[Simulation] YAML parsed, type: {type(test_config)}")
-        if isinstance(test_config, dict):
-            print(f"[Simulation] YAML keys: {list(test_config.keys())}")
-        else:
-            print(f"[Simulation] YAML content: {test_config}")
         
         sim = Simulation.from_config(tmp.name, environment_id=env_id)
         print(f"[Simulation] Simulation created, agents: {len(sim.agents)}")
