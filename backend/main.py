@@ -650,6 +650,42 @@ def storage_models():
         "models": ["gpt-4o", "gpt-4", "gpt-3.5-turbo", "Qwen2.5-7B-Instruct"]
     }
 
+
+# ============ LLM API Proxy ============
+# 代理到 XinHai/OpenAI 服务，供 Arena Agent 使用
+
+class ChatCompletionRequest(BaseModel):
+    model: str
+    messages: list
+    temperature: float = 0.7
+    max_tokens: int = 2000
+    stream: bool = False
+
+
+@app.post("/v1/chat/completions")
+async def chat_completions(request: ChatCompletionRequest):
+    """代理 LLM 请求到 XinHai 服务"""
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                f"{XINHAI_AGENT_URL}/v1/chat/completions",
+                json={
+                    "model": request.model,
+                    "messages": request.messages,
+                    "temperature": request.temperature,
+                    "max_tokens": request.max_tokens,
+                    "stream": request.stream
+                },
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer 171f137313b83a6df17ee17a63060830fbba5901ecf09dec"
+                }
+            )
+            return response.json()
+    except Exception as e:
+        raise HTTPException(503, f"LLM service unavailable: {e}")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
