@@ -37,6 +37,10 @@ class XinHaiArenaLLMConfig(BaseModel):
 
     @classmethod
     def from_config(cls, llm_config, controller_address):
-        if 'api_base' not in llm_config:
+        # 如果 llm_config 是字符串（如 'gpt-4o'），转换为字典
+        if isinstance(llm_config, str):
+            llm_config = {'model': llm_config}
+        # 如果是字典，设置 api_base
+        elif isinstance(llm_config, dict) and 'api_base' not in llm_config:
             llm_config['api_base'] = f'{controller_address}/v1'
         return cls(**llm_config)
