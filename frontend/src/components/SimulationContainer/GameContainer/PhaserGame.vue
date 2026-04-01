@@ -47,7 +47,6 @@ defineExpose({ scene, game });
 
 .game-container :deep(canvas) {
     display: block;
-    width: 100% !important;
-    height: 100% !important;
+    /* 让 Phaser 自己控制尺寸以保持宽高比 */
 }
 </style>

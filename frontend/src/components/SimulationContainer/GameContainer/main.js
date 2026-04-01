@@ -44,7 +44,7 @@ const config = {
         ]
     },
     scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.SHOW_ALL,
         autoCenter: Phaser.Scale.CENTER_BOTH
     }
 };
