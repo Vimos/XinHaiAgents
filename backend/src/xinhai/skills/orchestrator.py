@@ -62,7 +62,7 @@ class RoundRobinOrchestrator(Orchestrator):
 class DynamicOrchestrator(Orchestrator):
     """Dynamic orchestrator - selects based on content"""
     
-    def select_next_agent(self, context: "Context", agents: List["Agent") -> str:
+    def select_next_agent(self, context: "Context", agents: List["Agent"] -> str:
         if not agents:
             raise ValueError("No agents available")
         
@@ -105,7 +105,7 @@ class RoleBasedOrchestrator(Orchestrator):
         self.role_order = config.get("role_order", []) if config else []
         self.current_role_index = 0
     
-    def select_next_agent(self, context: "Context", agents: List["Agent") -> str:
+    def select_next_agent(self, context: "Context", agents: List["Agent"] -> str:
         if not agents:
             raise ValueError("No agents available")
         
