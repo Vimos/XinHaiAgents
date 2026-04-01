@@ -50,7 +50,7 @@ class RoundRobinOrchestrator(Orchestrator):
         super().__init__(config)
         self.current_index = 0
     
-    def select_next_agent(self, context: "Context", agents: List["Agent") -> str:
+    def select_next_agent(self, context: "Context", agents: List["Agent"]) -> str:
         if not agents:
             raise ValueError("No agents available")
         
