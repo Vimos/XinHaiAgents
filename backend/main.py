@@ -620,7 +620,7 @@ def fetch_memory(request: FetchMemoryRequest):
     })
     return {
         "memory": data,
-        "error_code": "OK"
+        "error_code": 0  # XinHaiStorageErrorCode.OK = 0
     }
 
 @app.post("/api/storage/store-memory")
@@ -633,7 +633,7 @@ def store_memory(request: StoreMemoryRequest):
         "storage_key": request.storage_key,
         "short_term_messages_count": short_term_count,
         "long_term_summaries_count": long_term_count,
-        "error_code": "OK"
+        "error_code": 0  # XinHaiStorageErrorCode.OK = 0
     }
 
 @app.get("/api/storage/capacity")
