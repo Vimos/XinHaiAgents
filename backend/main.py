@@ -596,33 +596,45 @@ def simulation_status(current_user: dict = Depends(get_current_user)):
 # ============ Controller Storage API (Embedded) ============
 # 模拟 Controller 的 storage API，消除外部 controller 依赖
 
+from xinhai.types.storage import XinHaiStorageErrorCode
+from xinhai.types.memory import XinHaiMemory, XinHaiShortTermMemory, XinHaiLongTermMemory
+
 class FetchMemoryRequest(BaseModel):
-    user_id: str
-    environment_id: str
+    storage_key: str
 
 class StoreMemoryRequest(BaseModel):
-    user_id: str
-    environment_id: str
-    messages: list
+    storage_key: str
+    memory: dict  # XinHaiMemory as dict
 
-# In-memory storage for simulation (per user-environment)
+# In-memory storage for simulation (per storage_key)
 simulation_memory = {}
 
 @app.post("/api/storage/fetch-memory")
 def fetch_memory(request: FetchMemoryRequest):
     """获取 agent 记忆（模拟 controller 的 storage API）"""
-    key = f"{request.user_id}_{request.environment_id}"
+    key = request.storage_key
+    data = simulation_memory.get(key, {
+        "storage_key": key,
+        "short_term_memory": {"messages": []},
+        "long_term_memory": {"summaries": []}
+    })
     return {
-        "status": "success",
-        "messages": simulation_memory.get(key, [])
+        "memory": data,
+        "error_code": "OK"
     }
 
 @app.post("/api/storage/store-memory")
 def store_memory(request: StoreMemoryRequest):
     """存储 agent 记忆（模拟 controller 的 storage API）"""
-    key = f"{request.user_id}_{request.environment_id}"
-    simulation_memory[key] = request.messages
-    return {"status": "success"}
+    simulation_memory[request.storage_key] = request.memory
+    short_term_count = len(request.memory.get("short_term_memory", {}).get("messages", []))
+    long_term_count = len(request.memory.get("long_term_memory", {}).get("summaries", []))
+    return {
+        "storage_key": request.storage_key,
+        "short_term_messages_count": short_term_count,
+        "long_term_summaries_count": long_term_count,
+        "error_code": "OK"
+    }
 
 @app.get("/api/storage/capacity")
 def storage_capacity():
