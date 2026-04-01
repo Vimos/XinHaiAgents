@@ -400,34 +400,8 @@ export class MultiAgentScene extends Phaser.Scene {
     }
 
     createUI() {
-        // 控制面板
-        const panelX = 20;
-        const panelY = 20;
-        
-        const panel = this.add.graphics();
-        panel.fillStyle(0x0A1628, 0.9);
-        panel.fillRoundedRect(panelX, panelY, 200, 150, 10);
-        panel.lineStyle(1, 0x00D4FF, 0.3);
-        panel.strokeRoundedRect(panelX, panelY, 200, 150, 10);
-        
-        // 面板标题
-        this.add.text(panelX + 15, panelY + 15, '控制面板', {
-            fontSize: '16px',
-            fontFamily: 'Noto Sans SC',
-            color: '#00D4FF',
-            fontStyle: 'bold'
-        });
-        
-        // 创建按钮
-        this.createButton(panelX + 100, panelY + 60, '▶️ 开始对话', () => {
-            this.startDialogue();
-        });
-        
-        this.createButton(panelX + 100, panelY + 110, '🔄 重置场景', () => {
-            this.resetScene();
-        });
-        
-        // Agent 信息面板（右侧）
+        // 控制面板已移除 - 使用对话记录区域的控制按钮
+        // 只保留 Agent 信息面板
         this.infoPanel = this.createInfoPanel();
     }
 
