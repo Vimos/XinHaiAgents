@@ -556,6 +556,8 @@ async def simulation_next(
         
         return {"status": "done", "message": "模拟已结束"}
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(500, f"Simulation step failed: {e}")
 
 @app.post("/api/simulation/reset")
