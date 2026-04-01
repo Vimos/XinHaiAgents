@@ -238,7 +238,7 @@ function getBuiltinExample(name) {
       历史摘要：{chat_summary}
       最新对话：{chat_history}
       可交互智能体：{agent_descriptions}
-      选择通讯目标和方式，回复JSON格式：{"method": "[Unicast]", "target": [1]}
+      选择通讯目标和方式，回复JSON格式：{{"method": "[Unicast]", "target": [1]}}
     summary_prompt: &summary_prompt |-
       根据历史摘要和最新对话，给出新的摘要。
       【历史摘要】{chat_summary}
