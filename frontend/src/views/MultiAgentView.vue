@@ -253,7 +253,7 @@ function getBuiltinExample(name) {
   environment:
     environment_type: agency
     environment_id: simple_demo
-    controller_address: http://localhost:5000
+    controller_address: http://localhost:8000
     topologies:
       - type: agency
         name: simple

@@ -454,13 +454,6 @@ def create_simulation(
         traceback.print_exc()
         raise HTTPException(500, f"xinhai arena not available: {e}")
     
-    # 检查 controller 是否可用
-    import requests
-    try:
-        requests.get("http://localhost:5000/api/health", timeout=2)
-    except requests.exceptions.ConnectionError:
-        raise HTTPException(503, "Controller 服务未启动。请先运行: python -m xinhai.controller")
-    
     # 写入临时文件
     tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False, encoding='utf-8')
     tmp.write(request.config_yaml)
@@ -594,10 +587,53 @@ def simulation_status(current_user: dict = Depends(get_current_user)):
                 "name": a.name,
                 "role": a.role_description,
                 "type": str(a.agent_type),
-                "messageCount": len(a.memory.short_term_memory.messages) if hasattr(a.memory, 'short_term_memory') else 0
+                "messageCount": len(a.memory.short_term_memory.messages) if hasattr(a.memory, 'short_term_memory') and a.memory else 0
             }
             for a in sim.agents
         ]
+    }
+
+# ============ Controller Storage API (Embedded) ============
+# 模拟 Controller 的 storage API，消除外部 controller 依赖
+
+class FetchMemoryRequest(BaseModel):
+    user_id: str
+    environment_id: str
+
+class StoreMemoryRequest(BaseModel):
+    user_id: str
+    environment_id: str
+    messages: list
+
+# In-memory storage for simulation (per user-environment)
+simulation_memory = {}
+
+@app.post("/api/storage/fetch-memory")
+def fetch_memory(request: FetchMemoryRequest):
+    """获取 agent 记忆（模拟 controller 的 storage API）"""
+    key = f"{request.user_id}_{request.environment_id}"
+    return {
+        "status": "success",
+        "messages": simulation_memory.get(key, [])
+    }
+
+@app.post("/api/storage/store-memory")
+def store_memory(request: StoreMemoryRequest):
+    """存储 agent 记忆（模拟 controller 的 storage API）"""
+    key = f"{request.user_id}_{request.environment_id}"
+    simulation_memory[key] = request.messages
+    return {"status": "success"}
+
+@app.get("/api/storage/capacity")
+def storage_capacity():
+    """检查存储容量"""
+    return {"status": "success", "capacity": 1000000}
+
+@app.get("/api/storage/models")
+def storage_models():
+    """获取可用模型列表"""
+    return {
+        "models": ["gpt-4o", "gpt-4", "gpt-3.5-turbo", "Qwen2.5-7B-Instruct"]
     }
 
 if __name__ == "__main__":
