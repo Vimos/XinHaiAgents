@@ -47,7 +47,7 @@ export class MultiAgentScene extends Phaser.Scene {
     }
 
     setAgentsConfig(agentsConfig) {
-        """根据配置动态创建 Agent"""
+        /* 根据配置动态创建 Agent */
         console.log('[MultiAgentScene] Creating agents from config:', agentsConfig);
         
         // 清除现有 agent
@@ -80,7 +80,7 @@ export class MultiAgentScene extends Phaser.Scene {
     }
     
     calculateAgentPositions(count) {
-        """计算 agent 位置，自动布局"""
+        /* 计算 agent 位置，自动布局 */
         const positions = [];
         const centerX = 512;
         const centerY = 384;
@@ -109,7 +109,7 @@ export class MultiAgentScene extends Phaser.Scene {
     }
     
     getRoleEmoji(role, name) {
-        """根据角色返回 emoji"""
+        /* 根据角色返回 emoji */
         const lowerRole = (role + name).toLowerCase();
         if (lowerRole.includes('用户') || lowerRole.includes('来访') || lowerRole.includes('咨询') || lowerRole.includes('patient')) return '😔';
         if (lowerRole.includes('咨询') || lowerRole.includes('治疗') || lowerRole.includes('therapist') || lowerRole.includes('医生')) return '🧑‍⚕️';
@@ -119,7 +119,7 @@ export class MultiAgentScene extends Phaser.Scene {
     }
     
     getAgentColor(index) {
-        """返回 agent 颜色"""
+        /* 返回 agent 颜色 */
         const colors = [0x00D4FF, 0x9F7AEA, 0x38B2AC, 0xF6AD55, 0x68D391, 0xFC8181];
         return colors[index % colors.length];
     }
