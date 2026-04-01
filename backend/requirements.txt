@@ -17,3 +17,4 @@ uuid6==2023.5.2
 transformers==4.36.2
 chromadb==0.4.18
 sentence-transformers==2.2.2
+modelscope==1.13.0

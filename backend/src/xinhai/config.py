@@ -2,12 +2,13 @@
 DATA_PATH = {'PsyQA_train':'/data2/AutoInvoice/large_span_enstra_PsyQA_train.json'}
 CLIENT_PATH = 'http://localhost:8080'
 
-## embedding model的位置
-MODEL_PATH = '/data2/AutoInvoice/bge-large-zh-v1.5'
+## embedding model的位置 - 使用 ModelScope 自动下载
+MODEL_PATH = 'AI-ModelScope/bge-large-zh-v1.5'
 
 ## 向量数据库的放置位置
-PROBOOKS_DB_PATH = '/data2/AutoInvoice/ProDB-bge-1.5-300'
-KNOW_DB_PATH = '/data2/AutoInvoice/KnowDB-bge-1.5-300'
+import os
+PROBOOKS_DB_PATH = os.path.expanduser('~/.xinhai/ProDB-bge-1.5-300')
+KNOW_DB_PATH = os.path.expanduser('~/.xinhai/KnowDB-bge-1.5-300')
 
 ## LLMs的放置位置
 CHATGLM_PATH = '/data2/AutoInvoice/chatglm3-6b'
