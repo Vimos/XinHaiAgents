@@ -283,3 +283,6 @@ pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,pycharm+all,python
 related_repos
+*.db
+*.sqlite
+*.sqlite3
