@@ -2,10 +2,9 @@ import logging
 from typing import List
 
 import chromadb
-import logger
 from chromadb.utils import embedding_functions
 
-from config import MODEL_PATH
+from .config import MODEL_PATH
 
 logging.basicConfig(level=logging.INFO,
                     format='[%(asctime)s] %(levelname)s - %(message)s',
