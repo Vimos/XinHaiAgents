@@ -455,14 +455,26 @@ def create_simulation(
         raise HTTPException(500, f"xinhai arena not available: {e}")
     
     # 写入临时文件
-    tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False)
+    tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False, encoding='utf-8')
     tmp.write(request.config_yaml)
+    tmp.flush()
     tmp.close()
     print(f"[Simulation] Config written to {tmp.name}")
+    print(f"[Simulation] Config content preview: {request.config_yaml[:200]}...")
     
     try:
         env_id = f"sim_user_{user_id}_{uuid.uuid4().hex[:8]}"
         print(f"[Simulation] Creating simulation with env_id: {env_id}")
+        
+        # 验证 YAML 格式
+        import yaml
+        with open(tmp.name, 'r', encoding='utf-8') as f:
+            test_config = yaml.safe_load(f)
+        print(f"[Simulation] YAML parsed, type: {type(test_config)}")
+        if isinstance(test_config, dict):
+            print(f"[Simulation] YAML keys: {list(test_config.keys())}")
+        else:
+            print(f"[Simulation] YAML content: {test_config}")
         
         sim = Simulation.from_config(tmp.name, environment_id=env_id)
         print(f"[Simulation] Simulation created, agents: {len(sim.agents)}")
