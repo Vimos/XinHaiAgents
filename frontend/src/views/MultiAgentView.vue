@@ -314,7 +314,7 @@ function getBuiltinExample(name) {
   environment:
     environment_type: agency
     environment_id: xinhai_cbt_simulation_0
-    controller_address: http://controller:5000
+    controller_address: http://localhost:8000
     topologies:
       - type: agency
         name: cbt
