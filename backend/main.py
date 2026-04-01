@@ -454,6 +454,13 @@ def create_simulation(
         traceback.print_exc()
         raise HTTPException(500, f"xinhai arena not available: {e}")
     
+    # 检查 controller 是否可用
+    import requests
+    try:
+        requests.get("http://localhost:5000/api/health", timeout=2)
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(503, "Controller 服务未启动。请先运行: python -m xinhai.controller")
+    
     # 写入临时文件
     tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False, encoding='utf-8')
     tmp.write(request.config_yaml)
