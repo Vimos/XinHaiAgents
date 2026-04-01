@@ -651,6 +651,21 @@ def storage_models():
     }
 
 
+# ============ Model List API (for ChatDetails.vue) ============
+
+@app.get("/api/list_models")
+def list_models():
+    """获取可用模型列表（供前端选择）"""
+    return {
+        "models": [
+            {"id": "gpt-4o", "name": "GPT-4o", "description": "OpenAI GPT-4o"},
+            {"id": "gpt-4", "name": "GPT-4", "description": "OpenAI GPT-4"},
+            {"id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "description": "OpenAI GPT-3.5"},
+            {"id": "Qwen2.5-7B-Instruct", "name": "Qwen2.5-7B", "description": "阿里通义千问"}
+        ]
+    }
+
+
 # ============ LLM API Proxy ============
 # 代理到 XinHai/OpenAI 服务，供 Arena Agent 使用
 
