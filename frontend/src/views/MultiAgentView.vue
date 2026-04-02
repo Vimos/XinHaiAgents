@@ -20,15 +20,13 @@
           </xh-button>
           
           <div class="model-selector">
-            <label>选择模型：</label>
-            <select v-model="selectedModel" class="model-select">
-              <option value="gpt-4o">GPT-4o (OpenAI)</option>
-              <option value="gpt-4">GPT-4 (OpenAI)</option>
-              <option value="gpt-3.5-turbo">GPT-3.5 Turbo (OpenAI)</option>
-              <option value="claude-3-opus">Claude 3 Opus (Anthropic)</option>
-              <option value="claude-3-sonnet">Claude 3 Sonnet (Anthropic)</option>
-              <option value="Qwen2.5-72B-Instruct">Qwen2.5-72B (阿里)</option>
-            </select>
+            <label>模型名称：</label>
+            <input
+              v-model="selectedModel"
+              type="text"
+              placeholder="输入模型名称，如: gpt-4o, claude-3-opus, Qwen2.5-72B"
+              class="model-input"
+            />
           </div>
 
           <div class="api-config">
@@ -690,7 +688,7 @@ function formatMarkdown(content) {
   margin-bottom: var(--space-sm);
 }
 
-.model-select {
+.model-input {
   width: 100%;
   padding: 10px 12px;
   background: var(--bg-secondary);
@@ -698,10 +696,9 @@ function formatMarkdown(content) {
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-size: var(--text-sm);
-  cursor: pointer;
 }
 
-.model-select:focus {
+.model-input:focus {
   outline: none;
   border-color: var(--accent-primary);
 }
