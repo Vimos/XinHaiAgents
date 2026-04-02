@@ -426,19 +426,103 @@ async def chat_stream(request: ChatRequest, current_user: dict = Depends(get_cur
 def health_check():
     return {"status": "ok"}
 
+
+# ============ Simulation State Persistence ============
+# 使用 SQLite 持久化存储，支持多 worker 共享
+
+SIMULATION_DB_PATH = "simulations.db"
+
+def init_simulation_db():
+    """初始化 simulation 数据库"""
+    conn = sqlite3.connect(SIMULATION_DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS simulation_states (
+            user_id INTEGER PRIMARY KEY,
+            config_yaml TEXT NOT NULL,
+            model TEXT DEFAULT 'gpt-4o',
+            api_url TEXT,
+            api_key TEXT,
+            current_turn INTEGER DEFAULT 0,
+            is_active BOOLEAN DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+def save_simulation_state(user_id: int, config_yaml: str, model: str, api_url: str | None, api_key: str | None):
+    """保存 simulation 配置到数据库"""
+    conn = sqlite3.connect(SIMULATION_DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT OR REPLACE INTO simulation_states 
+        (user_id, config_yaml, model, api_url, api_key, is_active, updated_at)
+        VALUES (?, ?, ?, ?, ?, 1, ?)
+    """, (user_id, config_yaml, model, api_url, api_key, datetime.now()))
+    conn.commit()
+    conn.close()
+
+
+def get_simulation_state(user_id: int) -> dict | None:
+    """从数据库获取 simulation 配置"""
+    conn = sqlite3.connect(SIMULATION_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT * FROM simulation_states 
+        WHERE user_id = ? AND is_active = 1
+    """, (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def update_simulation_turn(user_id: int, turn: int):
+    """更新当前回合数"""
+    conn = sqlite3.connect(SIMULATION_DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE simulation_states 
+        SET current_turn = ?, updated_at = ?
+        WHERE user_id = ?
+    """, (turn, datetime.now(), user_id))
+    conn.commit()
+    conn.close()
+
+
+def deactivate_simulation(user_id: int):
+    """标记 simulation 为结束"""
+    conn = sqlite3.connect(SIMULATION_DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE simulation_states 
+        SET is_active = 0, updated_at = ?
+        WHERE user_id = ?
+    """, (datetime.now(), user_id))
+    conn.commit()
+    conn.close()
+
+
+# 初始化数据库
+init_simulation_db()
+
+
 # ============ Simulation API ============
 
-# 用户模拟实例管理（内存中）- 使用单 worker 避免多进程问题
-user_simulations = {}
+# 内存缓存（worker 本地），定期从 SQLite 同步
+_user_sim_cache = {}
 
 class SimulationCreateRequest(BaseModel):
-    config_yaml: str  # YAML 配置内容
-    model: str = "gpt-4o"  # 前端选择的模型
-    api_url: str | None = None  # API URL
-    api_key: str | None = None  # API Key
+    config_yaml: str
+    model: str = "gpt-4o"
+    api_url: str | None = None
+    api_key: str | None = None
 
 class SimulationNextRequest(BaseModel):
-    input_messages: list = []  # 用户输入（proxy agent 场景）
+    input_messages: list = []
 
 @app.post("/api/simulation/create")
 def create_simulation(
@@ -499,9 +583,11 @@ def create_simulation(
         sim.reset()
         print(f"[Simulation] Simulation reset completed")
         
-        user_simulations[user_id] = sim
+        # 保存到数据库（支持多 worker）
+        save_simulation_state(user_id, modified_yaml, request.model, request.api_url, request.api_key)
+        # 同时保存到内存缓存（当前 worker）
+        _user_sim_cache[user_id] = sim
         print(f"[Simulation] Stored simulation for user_id: {user_id}")
-        print(f"[Simulation] Active simulations: {list(user_simulations.keys())}")
         
         # 返回 agent 列表供前端渲染
         agents_info = []
@@ -544,21 +630,40 @@ async def simulation_next(
 ):
     """执行一步模拟，返回 agent 发言"""
     user_id = current_user['user_id']
-    print(f"[Simulation] Next step for user_id: {user_id}")
-    print(f"[Simulation] Active simulations: {list(user_simulations.keys())}")
     
-    sim = user_simulations.get(user_id)
+    # 先从内存缓存获取
+    sim = _user_sim_cache.get(user_id)
     
+    # 如果缓存没有，从数据库加载
     if not sim:
-        print(f"[Simulation] No active simulation for user {user_id}")
-        raise HTTPException(404, "No active simulation. Create one first.")
+        state = get_simulation_state(user_id)
+        if not state:
+            raise HTTPException(404, "No active simulation. Create one first.")
+        
+        # 重新创建 simulation
+        try:
+            from xinhai.arena.simulation import Simulation
+            tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False, encoding='utf-8')
+            tmp.write(state['config_yaml'])
+            tmp.close()
+            
+            env_id = f"sim_user_{user_id}_{state.get('created_at', '')}"
+            sim = Simulation.from_config(tmp.name, environment_id=env_id)
+            sim.reset()
+            
+            # 保存到缓存
+            _user_sim_cache[user_id] = sim
+            os.unlink(tmp.name)
+        except Exception as e:
+            print(f"[Simulation] Failed to reload from database: {e}")
+            raise HTTPException(500, f"Failed to reload simulation: {e}")
     
     if sim.environment.is_done():
-        print(f"[Simulation] Environment is done for user {user_id}")
+        deactivate_simulation(user_id)
         return {"status": "done", "message": "模拟已结束"}
     
     try:
-        # 在线程池中执行（避免阻塞事件循环）
+        # 在线程池中执行
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(
             None,
@@ -566,6 +671,10 @@ async def simulation_next(
         )
         
         if result:
+            # 更新回合数
+            current_turn = getattr(sim.environment, 'cnt_turn', 0)
+            update_simulation_turn(user_id, current_turn)
+            
             return {
                 "status": "ok",
                 "message": {
@@ -588,30 +697,58 @@ async def simulation_next(
 def reset_simulation(current_user: dict = Depends(get_current_user)):
     """重置模拟"""
     user_id = current_user['user_id']
-    print(f"[Simulation] Reset for user_id: {user_id}")
-    print(f"[Simulation] Active simulations: {list(user_simulations.keys())}")
     
-    sim = user_simulations.get(user_id)
+    # 清除缓存
+    if user_id in _user_sim_cache:
+        del _user_sim_cache[user_id]
     
-    if not sim:
-        print(f"[Simulation] No active simulation to reset for user {user_id}")
+    # 从数据库重新加载
+    state = get_simulation_state(user_id)
+    if not state:
         raise HTTPException(404, "No active simulation")
     
-    sim.reset()
-    print(f"[Simulation] Reset successful for user {user_id}")
-    return {"status": "reset"}
+    try:
+        from xinhai.arena.simulation import Simulation
+        
+        tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False, encoding='utf-8')
+        tmp.write(state['config_yaml'])
+        tmp.close()
+        
+        env_id = f"sim_user_{user_id}_{uuid.uuid4().hex[:8]}"
+        sim = Simulation.from_config(tmp.name, environment_id=env_id)
+        sim.reset()
+        
+        # 保存到缓存
+        _user_sim_cache[user_id] = sim
+        os.unlink(tmp.name)
+        
+        return {"status": "reset"}
+    except Exception as e:
+        raise HTTPException(500, f"Reset failed: {e}")
 
 @app.get("/api/simulation/status")
 def simulation_status(current_user: dict = Depends(get_current_user)):
     """获取当前模拟状态"""
     user_id = current_user['user_id']
-    sim = user_simulations.get(user_id)
+    
+    # 先检查缓存
+    sim = _user_sim_cache.get(user_id)
     
     if not sim:
-        return {"status": "none"}
+        # 检查数据库
+        state = get_simulation_state(user_id)
+        if not state:
+            return {"status": "none"}
+        
+        return {
+            "status": "active" if state.get('is_active') else "done",
+            "currentTurn": state.get('current_turn', 0),
+            "agents": []
+        }
     
     return {
         "status": "active" if not sim.environment.is_done() else "done",
+        "currentTurn": getattr(sim.environment, 'cnt_turn', 0),
         "agents": [
             {
                 "id": a.agent_id,
@@ -732,5 +869,4 @@ async def chat_completions(request: ChatCompletionRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    # 使用单 worker 避免 simulation 状态不一致
-    uvicorn.run(app, host="0.0.0.0", port=8000, workers=1)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
