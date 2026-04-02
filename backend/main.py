@@ -697,14 +697,19 @@ async def simulation_next(
 def reset_simulation(current_user: dict = Depends(get_current_user)):
     """重置模拟"""
     user_id = current_user['user_id']
+    print(f"[Simulation] Reset requested for user_id: {user_id}")
     
     # 清除缓存
     if user_id in _user_sim_cache:
+        print(f"[Simulation] Clearing cache for user {user_id}")
         del _user_sim_cache[user_id]
     
     # 从数据库重新加载
     state = get_simulation_state(user_id)
+    print(f"[Simulation] Database state: {state is not None}")
+    
     if not state:
+        print(f"[Simulation] No simulation found in database for user {user_id}")
         raise HTTPException(404, "No active simulation")
     
     try:
@@ -722,8 +727,12 @@ def reset_simulation(current_user: dict = Depends(get_current_user)):
         _user_sim_cache[user_id] = sim
         os.unlink(tmp.name)
         
+        print(f"[Simulation] Reset successful for user {user_id}")
         return {"status": "reset"}
     except Exception as e:
+        print(f"[Simulation] Reset failed: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(500, f"Reset failed: {e}")
 
 @app.get("/api/simulation/status")
