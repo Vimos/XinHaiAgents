@@ -192,6 +192,7 @@ const isPaused = ref(false);
 const selectedModel = ref('gpt-4o'); // 默认模型
 const apiUrl = ref(''); // API URL
 const apiKey = ref(''); // API Key
+let abortController = null; // 用于取消请求
 
 const agents = ref([]);
 const topologies = ref([]);
@@ -444,9 +445,16 @@ async function createSimulation(configYaml) {
 async function runSimulation() {
   isRunning.value = true;
   isPaused.value = false;
+  abortController = new AbortController();
   
   while (isRunning.value && !isPaused.value && !simulationDone.value) {
     try {
+      // 检查是否已暂停
+      if (isPaused.value) {
+        console.log('[Simulation] Paused, breaking loop');
+        break;
+      }
+      
       // 标记当前思考的 agent
       const nextAgent = agents.value.find(a => a.state !== 'done');
       if (nextAgent) {
@@ -457,7 +465,8 @@ async function runSimulation() {
       const res = await fetch(`${API_URL}/api/simulation/next`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify({ input_messages: [] })
+        body: JSON.stringify({ input_messages: [] }),
+        signal: abortController.signal
       });
       
       if (!res.ok) {
@@ -512,6 +521,12 @@ async function runSimulation() {
         // 延迟一下再执行下一步
         await new Promise(resolve => setTimeout(resolve, 1500));
         
+        // 再次检查是否已暂停
+        if (isPaused.value) {
+          console.log('[Simulation] Paused after delay, breaking loop');
+          break;
+        }
+        
         // 重置发言状态
         speakingAgentId.value = null;
         agents.value.forEach(a => {
@@ -520,17 +535,27 @@ async function runSimulation() {
       }
       
     } catch (e) {
+      if (e.name === 'AbortError') {
+        console.log('[Simulation] Request aborted');
+        break;
+      }
       console.error('Simulation error:', e);
       break;
     }
   }
   
   isRunning.value = false;
+  abortController = null;
 }
 
 function pauseSimulation() {
+  console.log('[Simulation] Pause requested');
   isPaused.value = true;
   isRunning.value = false;
+  // 取消正在进行的请求
+  if (abortController) {
+    abortController.abort();
+  }
 }
 
 async function resetSimulation() {
