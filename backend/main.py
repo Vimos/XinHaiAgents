@@ -434,6 +434,8 @@ user_simulations = {}
 class SimulationCreateRequest(BaseModel):
     config_yaml: str  # YAML 配置内容
     model: str = "gpt-4o"  # 前端选择的模型
+    api_url: str | None = None  # API URL
+    api_key: str | None = None  # API Key
 
 class SimulationNextRequest(BaseModel):
     input_messages: list = []  # 用户输入（proxy agent 场景）
@@ -455,7 +457,7 @@ def create_simulation(
         traceback.print_exc()
         raise HTTPException(500, f"xinhai arena not available: {e}")
     
-    # 解析并修改 YAML，注入前端选择的模型
+    # 解析并修改 YAML，注入前端选择的模型和 API 配置
     import yaml
     try:
         config = yaml.safe_load(request.config_yaml)
@@ -464,8 +466,12 @@ def create_simulation(
         # 修改所有 agent 的 llm 配置
         if 'arena' in config and 'agents' in config['arena']:
             for agent in config['arena']['agents']:
-                agent['llm'] = request.model
-                print(f"[Simulation] Set agent {agent.get('name', agent.get('agent_id'))} llm to {request.model}")
+                agent['llm'] = {
+                    'model': request.model,
+                    'api_base': request.api_url or 'http://localhost:8000/v1',
+                    'api_key': request.api_key or 'EMPTY'
+                }
+                print(f"[Simulation] Set agent {agent.get('name', agent.get('agent_id'))} llm config")
         
         # 确保 controller_address 指向后端自己
         if 'arena' in config and 'environment' in config['arena']:

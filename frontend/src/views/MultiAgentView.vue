@@ -30,6 +30,22 @@
               <option value="Qwen2.5-72B-Instruct">Qwen2.5-72B (阿里)</option>
             </select>
           </div>
+
+          <div class="api-config">
+            <label>API 配置（可选，留空使用默认）</label>
+            <input
+              v-model="apiUrl"
+              type="text"
+              placeholder="API Base URL，如: https://api.openai.com/v1"
+              class="api-input"
+            />
+            <input
+              v-model="apiKey"
+              type="password"
+              placeholder="API Key"
+              class="api-input"
+            />
+          </div>
           
           <div class="example-configs">
             <p class="example-title">或选择示例配置：</p>
@@ -176,6 +192,8 @@ const simulationDone = ref(false);
 const isRunning = ref(false);
 const isPaused = ref(false);
 const selectedModel = ref('gpt-4o'); // 默认模型
+const apiUrl = ref(''); // API URL
+const apiKey = ref(''); // API Key
 
 const agents = ref([]);
 const topologies = ref([]);
@@ -380,7 +398,9 @@ async function createSimulation(configYaml) {
       headers: getHeaders(),
       body: JSON.stringify({
         config_yaml: configYaml,
-        model: selectedModel.value  // 传递前端选择的模型
+        model: selectedModel.value,  // 传递前端选择的模型
+        api_url: apiUrl.value || undefined,  // 传递 API URL（如果填写）
+        api_key: apiKey.value || undefined   // 传递 API Key（如果填写）
       })
     });
     
@@ -684,6 +704,41 @@ function formatMarkdown(content) {
 .model-select:focus {
   outline: none;
   border-color: var(--accent-primary);
+}
+
+.api-config {
+  margin: var(--space-lg) 0;
+  padding: var(--space-md);
+  background: rgba(139, 92, 246, 0.05);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.api-config label {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.api-input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: var(--space-sm);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+}
+
+.api-input:focus {
+  outline: none;
+  border-color: #8b5cf6;
+}
+
+.api-input::placeholder {
+  color: var(--text-muted);
 }
 
 .example-title {
