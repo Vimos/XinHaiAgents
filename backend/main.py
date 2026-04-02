@@ -500,6 +500,8 @@ def create_simulation(
         print(f"[Simulation] Simulation reset completed")
         
         user_simulations[user_id] = sim
+        print(f"[Simulation] Stored simulation for user_id: {user_id}")
+        print(f"[Simulation] Active simulations: {list(user_simulations.keys())}")
         
         # 返回 agent 列表供前端渲染
         agents_info = []
@@ -586,12 +588,17 @@ async def simulation_next(
 def reset_simulation(current_user: dict = Depends(get_current_user)):
     """重置模拟"""
     user_id = current_user['user_id']
+    print(f"[Simulation] Reset for user_id: {user_id}")
+    print(f"[Simulation] Active simulations: {list(user_simulations.keys())}")
+    
     sim = user_simulations.get(user_id)
     
     if not sim:
+        print(f"[Simulation] No active simulation to reset for user {user_id}")
         raise HTTPException(404, "No active simulation")
     
     sim.reset()
+    print(f"[Simulation] Reset successful for user {user_id}")
     return {"status": "reset"}
 
 @app.get("/api/simulation/status")
