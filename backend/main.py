@@ -542,12 +542,17 @@ async def simulation_next(
 ):
     """执行一步模拟，返回 agent 发言"""
     user_id = current_user['user_id']
+    print(f"[Simulation] Next step for user_id: {user_id}")
+    print(f"[Simulation] Active simulations: {list(user_simulations.keys())}")
+    
     sim = user_simulations.get(user_id)
     
     if not sim:
+        print(f"[Simulation] No active simulation for user {user_id}")
         raise HTTPException(404, "No active simulation. Create one first.")
     
     if sim.environment.is_done():
+        print(f"[Simulation] Environment is done for user {user_id}")
         return {"status": "done", "message": "模拟已结束"}
     
     try:
