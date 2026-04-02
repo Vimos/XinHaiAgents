@@ -428,7 +428,7 @@ def health_check():
 
 # ============ Simulation API ============
 
-# 用户模拟实例管理（内存中）
+# 用户模拟实例管理（内存中）- 使用单 worker 避免多进程问题
 user_simulations = {}
 
 class SimulationCreateRequest(BaseModel):
@@ -732,4 +732,5 @@ async def chat_completions(request: ChatCompletionRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # 使用单 worker 避免 simulation 状态不一致
+    uvicorn.run(app, host="0.0.0.0", port=8000, workers=1)
