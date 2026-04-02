@@ -42,12 +42,16 @@ DESCRIPT_PROMPT = [
     "Provide a thorough description of the elements in this image."]
 
 ## 使用GPT的一些参数配置
+import os
+
 class Args:
     pass
 args = Args()
-args.api_key = "sk-Nn5My5HMNLUMYNNBB6D43660AeE94d1789134671268f435p"
-args.proxy_api_url = "http://47.252.38.253:3040/v1"
-args.model_name = "gpt-4"
+
+# 从环境变量读取 API 配置，如果不存在则使用默认值
+args.api_key = os.getenv("OPENAI_API_KEY", "")
+args.api_base = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
+args.model_name = os.getenv("OPENAI_MODEL", "gpt-4o")
 args.completion_number = 1
 args.temperature = 0.90
 args.top_p = 0.75

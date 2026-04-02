@@ -37,10 +37,20 @@ class XinHaiArenaLLMConfig(BaseModel):
 
     @classmethod
     def from_config(cls, llm_config, controller_address):
+        from xinhai.config import args
+        
         # 如果 llm_config 是字符串（如 'gpt-4o'），转换为字典
         if isinstance(llm_config, str):
-            llm_config = {'model': llm_config}
-        # 如果是字典，设置 api_base
-        elif isinstance(llm_config, dict) and 'api_base' not in llm_config:
-            llm_config['api_base'] = f'{controller_address}/v1'
+            llm_config = {
+                'model': llm_config,
+                'api_base': getattr(args, 'api_base', f'{controller_address}/v1'),
+                'api_key': getattr(args, 'api_key', 'EMPTY')
+            }
+        # 如果是字典，补充缺失的配置
+        elif isinstance(llm_config, dict):
+            if 'api_base' not in llm_config:
+                llm_config['api_base'] = getattr(args, 'api_base', f'{controller_address}/v1')
+            if 'api_key' not in llm_config:
+                llm_config['api_key'] = getattr(args, 'api_key', 'EMPTY')
+        
         return cls(**llm_config)
