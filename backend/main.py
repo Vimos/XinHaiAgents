@@ -597,6 +597,8 @@ def create_simulation(
                 "name": agent.name,
                 "role": agent.role_description,
                 "type": str(agent.agent_type),
+                "prompt_template": getattr(agent, 'prompt_template', '')[:200] + "..." if getattr(agent, 'prompt_template', '') else '',
+                "routing_prompt": getattr(agent, 'routing_prompt_template', '')[:200] + "..." if getattr(agent, 'routing_prompt_template', '') else '',
             })
         
         # 提取拓扑信息

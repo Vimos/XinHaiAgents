@@ -189,6 +189,27 @@
             </span>
           </div>
         </div>
+        
+        <!-- Agent 提示词详情 -->
+        <div class="agent-prompts" v-if="agents.length > 0">
+          <div class="prompts-header">📝 Agent 提示词</div>
+          <div v-for="agent in agents" :key="agent.id" class="agent-prompt-item">
+            <div class="prompt-agent-name" @click="agent.showPrompt = !agent.showPrompt">
+              {{ agent.name }}
+              <span class="toggle-icon">{{ agent.showPrompt ? '▼' : '▶' }}</span>
+            </div>
+            <div v-if="agent.showPrompt" class="prompt-content">
+              <div v-if="agent.prompt_template" class="prompt-section">
+                <div class="prompt-label">对话提示词:</div>
+                <pre class="prompt-text">{{ agent.prompt_template }}</pre>
+              </div>
+              <div v-if="agent.routing_prompt" class="prompt-section">
+                <div class="prompt-label">路由提示词:</div>
+                <pre class="prompt-text">{{ agent.routing_prompt }}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
       </xh-card>
     </div>
   </div>
@@ -445,7 +466,8 @@ async function createSimulation(configYaml) {
     
     agents.value = data.agents.map(a => ({
       ...a,
-      state: 'idle'
+      state: 'idle',
+      showPrompt: false  // 添加折叠状态
     }));
     topologies.value = data.topologies || [];
     
@@ -1094,5 +1116,78 @@ function formatMarkdown(content) {
 
 .config-value.done {
   color: #9ca3af;
+}
+
+/* Agent 提示词展示 */
+.agent-prompts {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border-color);
+}
+
+.prompts-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
+}
+
+.agent-prompt-item {
+  margin-bottom: var(--space-md);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.prompt-agent-name {
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(0, 212, 255, 0.1);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.prompt-agent-name:hover {
+  background: rgba(0, 212, 255, 0.15);
+}
+
+.toggle-icon {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.prompt-content {
+  padding: var(--space-md);
+}
+
+.prompt-section {
+  margin-bottom: var(--space-md);
+}
+
+.prompt-section:last-child {
+  margin-bottom: 0;
+}
+
+.prompt-label {
+  font-size: 12px;
+  color: var(--accent-primary);
+  margin-bottom: var(--space-xs);
+}
+
+.prompt-text {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.3);
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 150px;
+  overflow-y: auto;
+  margin: 0;
 }
 </style>
