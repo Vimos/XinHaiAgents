@@ -67,36 +67,8 @@
     <div class="chat-panel">
       <!-- 对话记录 -->
       <xh-card title="💬 对话记录" class="chat-card">
-        <div ref="messagesList" class="messages-list">
-          <div v-if="messages.length === 0 && simulationActive" class="empty-hint">
-            点击「开始模拟」启动多智能体对话
-          </div>
-          
-          <div
-            v-for="(msg, index) in messages"
-            :key="index"
-            :class="['message', `message--${msg.role}`]"
-          >
-            <xh-avatar :name="msg.agentName" size="sm" />
-            <div class="message__content">
-              <div class="message__header">
-                <span class="message__agent">{{ msg.agentName }}</span>
-                <span class="message__time">{{ msg.timestamp || '' }}</span>
-              </div>
-              <div class="message__text" v-html="formatMarkdown(msg.content)"></div>
-            </div>
-          </div>
-          
-          <!-- 加载指示器 -->
-          <div v-if="isRunning" class="message message--system">
-            <div class="thinking-indicator">
-              <span></span><span></span><span></span>
-              <span class="thinking-text">{{ currentThinkingAgent }} 思考中...</span>
-            </div>
-          </div>
-        </div>
-        
-        <div class="chat-controls">
+        <!-- 控制按钮 - 固定在顶部 -->
+        <div class="chat-controls chat-controls--top">
           <xh-button 
             v-if="simulationActive && !isRunning"
             variant="primary" 
@@ -129,6 +101,35 @@
           >
             📋 更换配置
           </xh-button>
+        </div>
+        
+        <div ref="messagesList" class="messages-list">
+          <div v-if="messages.length === 0 && simulationActive" class="empty-hint">
+            点击「开始模拟」启动多智能体对话
+          </div>
+          
+          <div
+            v-for="(msg, index) in messages"
+            :key="index"
+            :class="['message', `message--${msg.role}`]"
+          >
+            <xh-avatar :name="msg.agentName" size="sm" />
+            <div class="message__content">
+              <div class="message__header">
+                <span class="message__agent">{{ msg.agentName }}</span>
+                <span class="message__time">{{ msg.timestamp || '' }}</span>
+              </div>
+              <div class="message__text" v-html="formatMarkdown(msg.content)"></div>
+            </div>
+          </div>
+          
+          <!-- 加载指示器 -->
+          <div v-if="isRunning" class="message message--system">
+            <div class="thinking-indicator">
+              <span></span><span></span><span></span>
+              <span class="thinking-text">{{ currentThinkingAgent }} 思考中...</span>
+            </div>
+          </div>
         </div>
       </xh-card>
       
@@ -907,6 +908,15 @@ function formatMarkdown(content) {
   border-top: 1px solid var(--border-color);
   justify-content: center;
   flex-wrap: wrap;
+}
+
+.chat-controls--top {
+  border-top: none;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 /* Agent 状态 */
