@@ -425,10 +425,10 @@ export class MultiAgentScene extends Phaser.Scene {
     
     createConfigPanel() {
         /* 创建配置显示面板（位于场景底部） */
-        const panelX = 50;
-        const panelY = 680;
-        const panelW = 924;
-        const panelH = 80;
+        const panelX = 20;
+        const panelY = 600;
+        const panelW = 984;
+        const panelH = 100;
         
         const container = this.add.container(panelX, panelY);
         
@@ -458,10 +458,11 @@ export class MultiAgentScene extends Phaser.Scene {
         });
         container.add(this.configText);
         
-        // 默认隐藏，有配置时显示
-        container.setVisible(false);
+        // 默认显示（调试用）
+        container.setVisible(true);
         this.configPanelContainer = container;
         
+        console.log('[MultiAgentScene] Config panel created at y:', panelY);
         return container;
     }
     
