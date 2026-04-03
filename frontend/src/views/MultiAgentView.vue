@@ -430,15 +430,20 @@ async function createSimulation(configYaml) {
     messages.value = [];
     
     // 等待 Phaser 场景准备好后传递 agent 配置
-    setTimeout(() => {
+    const setupPhaser = () => {
       if (currentScene.value && currentScene.value.setAgentsConfig) {
+        console.log('[MultiAgentView] Setting up Phaser agents:', data.agents);
         currentScene.value.setAgentsConfig(data.agents);
         // 显示配置
         if (currentScene.value.showConfig) {
           currentScene.value.showConfig(configYaml);
         }
+      } else {
+        console.log('[MultiAgentView] Phaser scene not ready, retrying...');
+        setTimeout(setupPhaser, 300);
       }
-    }, 500);
+    };
+    setTimeout(setupPhaser, 500);
     
   } catch (e) {
     alert('创建模拟失败: ' + e.message);
