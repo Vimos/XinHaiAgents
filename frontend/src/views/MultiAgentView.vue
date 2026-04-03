@@ -166,6 +166,30 @@
           </div>
         </div>
       </xh-card>
+      
+      <!-- 配置显示面板 -->
+      <xh-card title="📋 模拟配置" class="config-card" v-if="simulationActive">
+        <div class="config-content">
+          <div class="config-item">
+            <span class="config-label">模型:</span>
+            <span class="config-value">{{ selectedModel || '默认' }}</span>
+          </div>
+          <div class="config-item">
+            <span class="config-label">Agent数:</span>
+            <span class="config-value">{{ agents.length }}</span>
+          </div>
+          <div class="config-item">
+            <span class="config-label">最大回合:</span>
+            <span class="config-value">{{ topologies[0]?.maxTurns || '-' }}</span>
+          </div>
+          <div class="config-item">
+            <span class="config-label">状态:</span>
+            <span :class="['config-value', simulationDone ? 'done' : 'active']">
+              {{ simulationDone ? '已完成' : '进行中' }}
+            </span>
+          </div>
+        </div>
+      </xh-card>
     </div>
   </div>
 </template>
@@ -1028,5 +1052,47 @@ function formatMarkdown(content) {
   background: rgba(0, 0, 0, 0.3);
   border-radius: var(--radius-sm);
   color: var(--text-muted);
+}
+
+/* 配置卡片 */
+.config-card {
+  margin-top: var(--space-md);
+}
+
+.config-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.config-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.config-item:last-child {
+  border-bottom: none;
+}
+
+.config-label {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.config-value {
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.config-value.active {
+  color: #38b2ac;
+}
+
+.config-value.done {
+  color: #9ca3af;
 }
 </style>
