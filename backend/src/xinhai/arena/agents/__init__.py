@@ -174,8 +174,22 @@ class BaseAgent:
                 except KeyError:
                     continue
 
-                if isinstance(data['target'], int):
-                    targets = [data['target']]
+                # 处理不同类型的 targets
+                if isinstance(targets, str):
+                    # 字符串可能是 "1" 或 "[1,2]" 或 "1,2"
+                    try:
+                        if '[' in targets:
+                            targets = json.loads(targets)
+                        elif ',' in targets:
+                            targets = [int(x.strip()) for x in targets.split(',')]
+                        else:
+                            targets = [int(targets)]
+                    except (ValueError, json.JSONDecodeError):
+                        targets = []
+                elif isinstance(targets, int):
+                    targets = [targets]
+                elif not isinstance(targets, list):
+                    targets = list(targets) if hasattr(targets, '__iter__') else []
 
                 routing_type = XinHaiRoutingType.from_str(data['method'])
                 if self.agent_id not in targets and routing_type in self.allowed_routing_types:
