@@ -138,21 +138,27 @@ export class MultiAgentScene extends Phaser.Scene {
     }
 
     mapAgentId(agentId, agentName) {
-        // 尝试直接匹配 ID
-        if (this.agents.has(String(agentId))) {
-            return String(agentId);
+        // 尝试直接匹配 ID (字符串或数字)
+        const strId = String(agentId);
+        if (this.agents.has(strId)) {
+            return strId;
+        }
+        
+        // 尝试匹配数字 ID (如 "0", "1", "2")
+        if (this.agents.has(String(parseInt(agentId)))) {
+            return String(parseInt(agentId));
         }
         
         // 根据名字映射到场景中的 agent
         const nameToId = {
-            '用户': 'patient',
-            '来访者': 'patient',
-            '咨询者': 'patient',
-            '助手': 'therapist',
-            '咨询师': 'therapist',
-            '治疗师': 'therapist',
-            '督导': 'supervisor',
-            '督导师': 'supervisor'
+            '用户': '0',
+            '来访者': '0', 
+            '咨询者': '0',
+            '助手': '1',
+            '咨询师': '1',
+            '治疗师': '1',
+            '督导': '2',
+            '督导师': '2'
         };
         
         const mappedId = nameToId[agentName];
@@ -160,8 +166,17 @@ export class MultiAgentScene extends Phaser.Scene {
             return mappedId;
         }
         
+        // 根据名字查找 agent
+        for (const [id, agent] of this.agents.entries()) {
+            if (agent.config && (agent.config.name === agentName || agent.config.id === agentId)) {
+                return id;
+            }
+        }
+        
         // 默认返回第一个 agent
-        return this.agents.keys().next().value;
+        const firstKey = this.agents.keys().next().value;
+        console.log(`[MultiAgentScene] Agent not found, using first: ${firstKey}`);
+        return firstKey;
     }
 
     createBackground() {
