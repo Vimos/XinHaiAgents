@@ -169,9 +169,16 @@ class BaseAgent:
             while not routing_message:
                 data = self.prompt_for_routing(routing_prompt)
                 logger.debug(data)
+                
+                # 检查 data 是否为 None
+                if not data:
+                    logger.warning("prompt_for_routing returned None, retrying...")
+                    continue
+                
                 try:
                     targets = data["target"]
-                except KeyError:
+                except (KeyError, TypeError):
+                    logger.warning(f"Invalid data format: {data}")
                     continue
 
                 # 处理不同类型的 targets
