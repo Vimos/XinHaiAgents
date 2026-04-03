@@ -418,6 +418,73 @@ export class MultiAgentScene extends Phaser.Scene {
         // 控制面板已移除 - 使用对话记录区域的控制按钮
         // 只保留 Agent 信息面板
         this.infoPanel = this.createInfoPanel();
+        
+        // 创建配置显示面板（调试用）
+        this.configPanel = this.createConfigPanel();
+    }
+    
+    createConfigPanel() {
+        /* 创建配置显示面板（位于场景底部） */
+        const panelX = 50;
+        const panelY = 680;
+        const panelW = 924;
+        const panelH = 80;
+        
+        const container = this.add.container(panelX, panelY);
+        
+        // 背景
+        const bg = this.add.graphics();
+        bg.fillStyle(0x0A1628, 0.95);
+        bg.fillRoundedRect(0, 0, panelW, panelH, 8);
+        bg.lineStyle(1, 0x00D4FF, 0.3);
+        bg.strokeRoundedRect(0, 0, panelW, panelH, 8);
+        container.add(bg);
+        
+        // 标题
+        const title = this.add.text(10, 8, '📋 当前配置', {
+            fontSize: '12px',
+            fontFamily: 'Noto Sans SC',
+            color: '#00D4FF',
+            fontStyle: 'bold'
+        });
+        container.add(title);
+        
+        // 配置内容文本
+        this.configText = this.add.text(10, 28, '等待配置加载...', {
+            fontSize: '11px',
+            fontFamily: 'monospace',
+            color: '#94A3B8',
+            wordWrap: { width: panelW - 20 }
+        });
+        container.add(this.configText);
+        
+        // 默认隐藏，有配置时显示
+        container.setVisible(false);
+        this.configPanelContainer = container;
+        
+        return container;
+    }
+    
+    showConfig(yamlConfig) {
+        /* 显示配置内容 */
+        if (!yamlConfig) return;
+        
+        // 简化显示：只显示关键信息
+        const lines = yamlConfig.split('\n');
+        const keyInfo = [];
+        
+        for (const line of lines) {
+            if (line.includes('name:') || line.includes('model:') || 
+                line.includes('agent_type:') || line.includes('max_turns:')) {
+                keyInfo.push(line.trim());
+            }
+        }
+        
+        const displayText = keyInfo.slice(0, 8).join('\n') || '配置已加载';
+        this.configText.setText(displayText);
+        this.configPanelContainer.setVisible(true);
+        
+        console.log('[MultiAgentScene] Config displayed');
     }
 
     createButton(x, y, text, callback) {

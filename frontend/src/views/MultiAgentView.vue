@@ -432,6 +432,10 @@ async function createSimulation(configYaml) {
     setTimeout(() => {
       if (currentScene.value && currentScene.value.setAgentsConfig) {
         currentScene.value.setAgentsConfig(data.agents);
+        // 显示配置
+        if (currentScene.value.showConfig) {
+          currentScene.value.showConfig(configYaml);
+        }
       }
     }, 500);
     
